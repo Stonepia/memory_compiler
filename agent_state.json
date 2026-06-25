@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "P0",
-  "current_gate": "M06_PRECHECK",
+  "current_gate": "M07_RECORDER",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -185,7 +185,7 @@
       "handoff_report": "reports/handoffs/M05_RETRIEVER_attempt_20260625080439.md"
     },
     "M06_PRECHECK": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M06_PRECHECK.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -193,7 +193,30 @@
         "M05_RETRIEVER"
       ],
       "blockers": [],
-      "attempts": []
+      "active_agent": "module-impl-agent-M06",
+      "attempt_id": "attempt_20260625081908",
+      "started_at": "2026-06-25T08:19:08Z",
+      "completed_at": "2026-06-25T08:42:00Z",
+      "acceptance_report": "reports/acceptance/M06_PRECHECK_attempt_20260625081908.md",
+      "handoff_report": "reports/handoffs/M06_PRECHECK_attempt_20260625081908.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260625081908",
+          "agent": "module-impl-agent-M06",
+          "started_at": "2026-06-25T08:19:08Z",
+          "completed_at": "2026-06-25T08:42:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M06_PRECHECK_attempt_20260625081908.md",
+          "handoff_report": "reports/handoffs/M06_PRECHECK_attempt_20260625081908.md",
+          "review": {
+            "result": "needs_revision",
+            "summary": "Tests did not include an explicit decision-precedence case asserting block > warn when both a warning rule and the block rule fire together; implementation was correct.",
+            "resolved": true,
+            "resolved_at": "2026-06-25T08:42:00Z",
+            "resolution": "Added tests/test_precheck.py::test_block_takes_precedence_over_warn (a single request fires both the edit-without-task-ref warn rule and the direct-skill-mutation block rule; asserts both ids in matched_rules and decision == 'block') and ::test_warn_takes_precedence_over_allow (single warn rule -> decision == 'warn'). No production logic changed; the existing precedence implementation was already correct. Re-ran acceptance: pytest 15 (precheck) + 178 (full) passed, ruff clean, dmc --help exit 0. No tests weakened, no new dependencies."
+          }
+        }
+      ]
     },
     "M07_RECORDER": {
       "status": "ready",
@@ -335,5 +358,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T08:20:00Z"
+  "updated_at": "2026-06-25T08:42:00Z"
 }

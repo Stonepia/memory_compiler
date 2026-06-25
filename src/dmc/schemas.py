@@ -60,6 +60,7 @@ __all__ = [
     "SearchRequest",
     "SearchResult",
     "PrecheckRequest",
+    "PrecheckRule",
     "PrecheckResult",
     "EpisodeCard",
     "FailureMode",
@@ -516,6 +517,25 @@ class PrecheckRequest(BaseModel):
     task_context: dict[str, Any] = Field(default_factory=dict)
 
 
+class PrecheckRule(BaseModel):
+    """A deterministic precheck warning/block rule.
+
+    Rules are evaluated by ``src/dmc/precheck.py`` (no LLM). Each rule carries a
+    stable ``id`` (slug), a human-readable ``description``, and the ``decision``
+    it contributes when it fires (``warn`` or ``block``). ``required_evidence``
+    lists evidence/paths the agent must supply before committing when the rule
+    fires (e.g. the proposal path for a blocked direct skill mutation).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    id: Slug
+    description: str
+    decision: Literal["warn", "block"]
+    rationale: str | None = None
+    required_evidence: list[str] = Field(default_factory=list)
+
+
 class PrecheckResult(BaseModel):
     """The deterministic precheck decision for an action."""
 
@@ -525,6 +545,7 @@ class PrecheckResult(BaseModel):
     reasons: list[str] = Field(default_factory=list)
     matched_rules: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+    required_evidence_before_commit: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -652,6 +673,7 @@ EXPORTED_MODELS: dict[str, type[BaseModel]] = {
     "search_request": SearchRequest,
     "search_result": SearchResult,
     "precheck_request": PrecheckRequest,
+    "precheck_rule": PrecheckRule,
     "precheck_result": PrecheckResult,
     "episode_card": EpisodeCard,
     "failure_mode": FailureMode,

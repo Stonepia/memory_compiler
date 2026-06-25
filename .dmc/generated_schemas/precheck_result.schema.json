@@ -25,6 +25,13 @@
       "title": "Reasons",
       "type": "array"
     },
+    "required_evidence_before_commit": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Evidence Before Commit",
+      "type": "array"
+    },
     "warnings": {
       "items": {
         "type": "string"
