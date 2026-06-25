@@ -1,0 +1,9 @@
+id: task_demo_bmg_perf
+repo: demo
+mode: perf_debug
+task: "Investigate a BMG kernel performance regression and produce a validated next step."
+hardware:
+  - bmg
+changed_files: []
+current_phase: investigation
+budget_tokens: 3000

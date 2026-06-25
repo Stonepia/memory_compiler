@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMC TraceEvent",
+  "type": "object",
+  "required": [
+    "event_id",
+    "session_id",
+    "timestamp",
+    "phase",
+    "actor",
+    "intent",
+    "action",
+    "observation",
+    "provenance"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "step_id": {
+      "type": "integer"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "localize",
+        "inspect",
+        "plan",
+        "edit",
+        "test",
+        "benchmark",
+        "profile",
+        "analyze",
+        "validate",
+        "review",
+        "distill"
+      ]
+    },
+    "actor": {
+      "enum": [
+        "agent",
+        "human",
+        "tool",
+        "system"
+      ]
+    },
+    "intent": {
+      "type": "string"
+    },
+    "action": {
+      "type": "object",
+      "required": [
+        "kind"
+      ]
+    },
+    "repo_state": {
+      "type": "object"
+    },
+    "artifacts": {
+      "type": "object"
+    },
+    "observation": {
+      "type": "object",
+      "required": [
+        "outcome"
+      ]
+    },
+    "reasoning_summary": {
+      "type": "object"
+    },
+    "memory_hooks": {
+      "type": "object"
+    },
+    "provenance": {
+      "type": "array"
+    }
+  }
+}

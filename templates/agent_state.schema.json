@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMC Agent State",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project",
+    "current_phase",
+    "modules",
+    "quality_gates"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "name",
+        "root",
+        "goal",
+        "project_status"
+      ]
+    },
+    "current_phase": {
+      "type": "string"
+    },
+    "current_gate": {
+      "type": "string"
+    },
+    "global_rules": {
+      "type": "object"
+    },
+    "modules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "status",
+          "module_doc",
+          "dependencies",
+          "blockers",
+          "attempts"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ready",
+              "blocked",
+              "in_progress",
+              "needs_revision",
+              "done",
+              "skipped"
+            ]
+          },
+          "module_doc": {
+            "type": "string"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blockers": {
+            "type": "array"
+          },
+          "attempts": {
+            "type": "array"
+          },
+          "active_agent": {
+            "type": "string"
+          },
+          "attempt_id": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          },
+          "handoff_report": {
+            "type": "string"
+          },
+          "acceptance_report": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "handoffs": {
+      "type": "array"
+    },
+    "decisions": {
+      "type": "array"
+    },
+    "blockers": {
+      "type": "array"
+    },
+    "quality_gates": {
+      "type": "object"
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

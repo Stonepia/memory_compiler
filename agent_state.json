@@ -1,0 +1,269 @@
+{
+  "schema_version": "0.1.0",
+  "project": {
+    "name": "dev-memory-compiler",
+    "short_name": "dmc",
+    "root": ".",
+    "goal": "Build a local-first Dev Memory Compiler sidecar for coding agents.",
+    "project_status": "initialized"
+  },
+  "current_phase": "P0",
+  "current_gate": "M01_SCHEMAS",
+  "global_rules": {
+    "fresh_agent_default": true,
+    "must_read_start_here": true,
+    "must_validate_state_before_work": true,
+    "no_wheel_reinvention": true,
+    "no_direct_skill_mutation": true
+  },
+  "modules": {
+    "M00_BOOTSTRAP": {
+      "status": "done",
+      "module_doc": "modules/M00_BOOTSTRAP.md",
+      "dependencies": [],
+      "blockers": [],
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260625054019",
+          "agent": "module-impl-agent-M00",
+          "started_at": "2026-06-25T05:40:19Z",
+          "completed_at": "2026-06-25T05:42:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M00_BOOTSTRAP_attempt_20260625054019.md",
+          "handoff_report": "reports/handoffs/M00_BOOTSTRAP_attempt_20260625054019.md"
+        }
+      ],
+      "active_agent": "module-impl-agent-M00",
+      "attempt_id": "attempt_20260625054019",
+      "started_at": "2026-06-25T05:40:19Z",
+      "completed_at": "2026-06-25T05:42:00Z",
+      "acceptance_report": "reports/acceptance/M00_BOOTSTRAP_attempt_20260625054019.md",
+      "handoff_report": "reports/handoffs/M00_BOOTSTRAP_attempt_20260625054019.md"
+    },
+    "M01_SCHEMAS": {
+      "status": "ready",
+      "module_doc": "modules/M01_SCHEMAS.md",
+      "dependencies": [
+        "M00_BOOTSTRAP"
+      ],
+      "blockers": [],
+      "attempts": []
+    },
+    "M02_STORE": {
+      "status": "blocked",
+      "module_doc": "modules/M02_STORE.md",
+      "dependencies": [
+        "M00_BOOTSTRAP",
+        "M01_SCHEMAS"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M01"
+        }
+      ],
+      "attempts": []
+    },
+    "M03_PLAN_GRAPH": {
+      "status": "blocked",
+      "module_doc": "modules/M03_PLAN_GRAPH.md",
+      "dependencies": [
+        "M00_BOOTSTRAP",
+        "M01_SCHEMAS",
+        "M02_STORE"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M02"
+        }
+      ],
+      "attempts": []
+    },
+    "M04_RENDERER": {
+      "status": "blocked",
+      "module_doc": "modules/M04_RENDERER.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M03_PLAN_GRAPH"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M03"
+        }
+      ],
+      "attempts": []
+    },
+    "M05_RETRIEVER": {
+      "status": "blocked",
+      "module_doc": "modules/M05_RETRIEVER.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M02_STORE"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M02"
+        }
+      ],
+      "attempts": []
+    },
+    "M06_PRECHECK": {
+      "status": "blocked",
+      "module_doc": "modules/M06_PRECHECK.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M02_STORE",
+        "M05_RETRIEVER"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M05"
+        }
+      ],
+      "attempts": []
+    },
+    "M07_RECORDER": {
+      "status": "blocked",
+      "module_doc": "modules/M07_RECORDER.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M02_STORE"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M02"
+        }
+      ],
+      "attempts": []
+    },
+    "M08_DISTILLER_EVALS": {
+      "status": "blocked",
+      "module_doc": "modules/M08_DISTILLER_EVALS.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M02_STORE",
+        "M07_RECORDER"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M07"
+        }
+      ],
+      "attempts": []
+    },
+    "M09_MCP_SERVER": {
+      "status": "blocked",
+      "module_doc": "modules/M09_MCP_SERVER.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M02_STORE",
+        "M03_PLAN_GRAPH",
+        "M04_RENDERER",
+        "M05_RETRIEVER",
+        "M06_PRECHECK",
+        "M07_RECORDER",
+        "M08_DISTILLER_EVALS"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for core modules"
+        }
+      ],
+      "attempts": []
+    },
+    "M10_ADAPTERS": {
+      "status": "blocked",
+      "module_doc": "modules/M10_ADAPTERS.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M03_PLAN_GRAPH",
+        "M04_RENDERER",
+        "M09_MCP_SERVER"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M09"
+        }
+      ],
+      "attempts": []
+    },
+    "M11_CLI": {
+      "status": "blocked",
+      "module_doc": "modules/M11_CLI.md",
+      "dependencies": [
+        "M01_SCHEMAS",
+        "M02_STORE",
+        "M03_PLAN_GRAPH",
+        "M04_RENDERER",
+        "M05_RETRIEVER",
+        "M06_PRECHECK",
+        "M07_RECORDER",
+        "M08_DISTILLER_EVALS",
+        "M10_ADAPTERS"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for M10"
+        }
+      ],
+      "attempts": []
+    },
+    "G01_INTEGRATION_V0": {
+      "status": "blocked",
+      "module_doc": "modules/G01_INTEGRATION_V0.md",
+      "dependencies": [
+        "M00_BOOTSTRAP",
+        "M01_SCHEMAS",
+        "M02_STORE",
+        "M03_PLAN_GRAPH",
+        "M04_RENDERER",
+        "M05_RETRIEVER",
+        "M06_PRECHECK",
+        "M07_RECORDER",
+        "M08_DISTILLER_EVALS",
+        "M09_MCP_SERVER",
+        "M10_ADAPTERS",
+        "M11_CLI"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for all V0 modules"
+        }
+      ],
+      "attempts": []
+    },
+    "G02_DELIVERY_V0": {
+      "status": "blocked",
+      "module_doc": "modules/G02_DELIVERY_V0.md",
+      "dependencies": [
+        "G01_INTEGRATION_V0"
+      ],
+      "blockers": [
+        {
+          "summary": "waiting for G01"
+        }
+      ],
+      "attempts": []
+    }
+  },
+  "handoffs": [],
+  "decisions": [],
+  "blockers": [],
+  "quality_gates": {
+    "v0_required": [
+      "uv sync",
+      "uv run pytest",
+      "uv run ruff check .",
+      "uv run dmc --help"
+    ],
+    "forbidden_v0": [
+      "custom repo graph",
+      "vector DB",
+      "graph DB",
+      "web UI",
+      "agent harness",
+      "sandbox runner",
+      "custom code indexer"
+    ]
+  },
+  "updated_at": "2026-06-25T05:42:00Z"
+}

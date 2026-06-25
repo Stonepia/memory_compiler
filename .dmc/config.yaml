@@ -1,0 +1,24 @@
+# DMC configuration (seeded by M00_BOOTSTRAP).
+# Static configuration only. Dynamic project state lives in
+# .dmc/state/project_state.yaml.
+schema_version: "0.1.0"
+project:
+  name: dev-memory-compiler
+  short_name: dmc
+paths:
+  state: .dmc/state
+  plans: .dmc/plans
+  memory: .dmc/memory
+  skills: .dmc/skills
+  knowledge: .dmc/knowledge
+  artifacts: .dmc/artifacts
+  proposals: .dmc/proposals
+  adapters: .dmc/adapters
+store:
+  # SQLite + FTS5 index location (created by M02_STORE).
+  sqlite_path: .dmc/dmc.sqlite3
+memory:
+  events_log: .dmc/memory/events.jsonl
+artifacts:
+  index: .dmc/artifacts/index.jsonl
+  raw_dir: .dmc/artifacts/raw

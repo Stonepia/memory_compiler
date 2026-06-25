@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMC EvalCase",
+  "type": "object",
+  "required": [
+    "id",
+    "source_session",
+    "task",
+    "outcome",
+    "labels",
+    "provenance"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "source_session": {
+      "type": "string"
+    },
+    "task": {
+      "type": "object"
+    },
+    "initial_plan_graph": {
+      "type": "string"
+    },
+    "final_plan_graph": {
+      "type": "string"
+    },
+    "execution_trace": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "object"
+    },
+    "labels": {
+      "type": "object"
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "future_assertions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "array"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+[project]
+name = "dmc"
+version = "0.1.0"
+description = "Dev Memory Compiler: local-first coding-agent memory/context sidecar"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2",
+  "pydantic-settings>=2",
+  "pyyaml>=6",
+  "typer>=0.12",
+  "rich>=13",
+]
+
+[project.scripts]
+dmc = "dmc.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dmc"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,7 @@
+# DMC active task pointer (seeded by M00_BOOTSTRAP).
+# Populated when an agent claims a task. Empty at bootstrap.
+schema_version: "0.1.0"
+active_task: null
+session_id: null
+run_id: null
+updated_at: "2026-06-25T05:40:19Z"

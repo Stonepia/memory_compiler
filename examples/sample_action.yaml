@@ -1,0 +1,10 @@
+action: edit
+files:
+  - torch/_inductor/example.py
+command: null
+intent: "try changing tile size heuristic"
+risk_level: medium
+task_context:
+  hardware:
+    - bmg
+  workflow: roofline-kernel-opt

@@ -1,0 +1,11 @@
+# DMC dynamic project state (seeded by M00_BOOTSTRAP).
+# This file holds dynamic facts about the project. Stable instruction files
+# (AGENTS.md, skills, instructions) must NOT contain dynamic state.
+schema_version: "0.1.0"
+project_status: initialized
+current_phase: P0
+last_completed_module: M00_BOOTSTRAP
+updated_at: "2026-06-25T05:40:19Z"
+notes:
+  - "Bootstrap complete: repo skeleton, uv environment, and .dmc tree created."
+facts: []

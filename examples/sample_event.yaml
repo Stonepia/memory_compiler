@@ -1,0 +1,29 @@
+event_id: event_demo_001
+session_id: sess_demo
+run_id: run_demo
+step_id: 1
+timestamp: "2026-06-25T00:00:00Z"
+phase: benchmark
+actor: agent
+intent: "Record demo benchmark regression after a heuristic change."
+action:
+  kind: benchmark_run
+  command: "pytest tests/test_demo.py"
+repo_state:
+  git_sha_before: "demo_before"
+  git_sha_after: "demo_after"
+artifacts:
+  outputs:
+    - artifact://benchmark/demo
+observation:
+  outcome: regressed
+  metrics:
+    delta_pct: 6.5
+reasoning_summary:
+  hypothesis_after: "Heuristic change regressed; check evidence before repeating."
+  confidence: medium
+memory_hooks:
+  candidate_failure_mode: true
+  candidate_precheck_rule: true
+provenance:
+  - session://sess_demo

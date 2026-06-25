@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMC PlanGraph",
+  "type": "object",
+  "required": [
+    "id",
+    "task",
+    "nodes"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "task": {
+      "type": "object"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "goal",
+          "dependencies",
+          "success_criteria"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "brief",
+              "inspect",
+              "plan",
+              "edit",
+              "test",
+              "benchmark",
+              "profile",
+              "review",
+              "decide",
+              "distill"
+            ]
+          },
+          "goal": {
+            "type": "string"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "agent": {
+            "type": "object"
+          },
+          "context_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inputs": {
+            "type": "object"
+          },
+          "outputs": {
+            "type": "object"
+          },
+          "evidence_contract": {
+            "type": "object"
+          },
+          "success_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "human_review": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}
