@@ -1,0 +1,27 @@
+{
+  "additionalProperties": true,
+  "description": "Result of validating a :class:`PlanGraph` (or similar object).\n\nValidation does not raise for an invalid graph; instead it collects every\nproblem so callers can report all of them at once. ``ok`` is ``True`` only\nwhen ``errors`` is empty. ``ok`` is kept in sync with ``errors`` by a\nvalidator so a report cannot claim success while carrying errors.",
+  "properties": {
+    "errors": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Errors",
+      "type": "array"
+    },
+    "ok": {
+      "default": true,
+      "title": "Ok",
+      "type": "boolean"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "title": "ValidationReport",
+  "type": "object"
+}

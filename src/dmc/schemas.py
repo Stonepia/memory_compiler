@@ -479,7 +479,14 @@ class SearchRequest(BaseModel):
 
 
 class SearchResult(BaseModel):
-    """A single local search hit."""
+    """A single local search hit.
+
+    ``reason`` is an optional, human-readable explanation of *why* this result
+    is relevant to the query (populated by the retriever's ranking step). It is
+    optional with a ``None`` default so existing callers/constructions stay
+    valid. Provenance, when the backing object carries it, is attached as an
+    extra field (``model_config`` allows extras).
+    """
 
     model_config = ConfigDict(extra="allow")
 
@@ -488,6 +495,7 @@ class SearchResult(BaseModel):
     kind: str
     snippet: str | None = None
     title: str | None = None
+    reason: str | None = None
 
 
 # ---------------------------------------------------------------------------

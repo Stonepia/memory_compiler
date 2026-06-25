@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "P0",
-  "current_gate": "M05_RETRIEVER",
+  "current_gate": "M06_PRECHECK",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -152,28 +152,47 @@
       "handoff_report": "reports/handoffs/M04_RENDERER_attempt_20260625075631.md"
     },
     "M05_RETRIEVER": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M05_RETRIEVER.md",
       "dependencies": [
         "M01_SCHEMAS",
         "M02_STORE"
       ],
       "blockers": [],
-      "attempts": []
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260625080439",
+          "agent": "module-impl-agent-M05",
+          "started_at": "2026-06-25T08:04:39Z",
+          "completed_at": "2026-06-25T08:10:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M05_RETRIEVER_attempt_20260625080439.md",
+          "handoff_report": "reports/handoffs/M05_RETRIEVER_attempt_20260625080439.md",
+          "review": {
+            "result": "needs_revision",
+            "summary": "Acceptance report was missing the required \"Dependency changes\" section mandated by docs/ACCEPTANCE_PROTOCOL.md lines 34-47; code and tests passed.",
+            "resolved": true,
+            "resolved_at": "2026-06-25T08:20:00Z",
+            "resolution": "Added the '## Dependency changes' section to reports/acceptance/M05_RETRIEVER_attempt_20260625080439.md (no new project deps; SearchResult.reason optional field + regenerated search_result.schema.json noted). All required sections now present. Re-ran acceptance: pytest 21 + 163 passed, ruff clean, dmc --help exit 0. No code or tests changed."
+          }
+        }
+      ],
+      "active_agent": "module-impl-agent-M05",
+      "attempt_id": "attempt_20260625080439",
+      "started_at": "2026-06-25T08:04:39Z",
+      "completed_at": "2026-06-25T08:10:00Z",
+      "acceptance_report": "reports/acceptance/M05_RETRIEVER_attempt_20260625080439.md",
+      "handoff_report": "reports/handoffs/M05_RETRIEVER_attempt_20260625080439.md"
     },
     "M06_PRECHECK": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M06_PRECHECK.md",
       "dependencies": [
         "M01_SCHEMAS",
         "M02_STORE",
         "M05_RETRIEVER"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M05"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M07_RECORDER": {
@@ -316,5 +335,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T07:58:00Z"
+  "updated_at": "2026-06-25T08:20:00Z"
 }

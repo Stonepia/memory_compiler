@@ -1,10 +1,22 @@
 {
   "additionalProperties": true,
-  "description": "A single local search hit.",
+  "description": "A single local search hit.\n\n``reason`` is an optional, human-readable explanation of *why* this result\nis relevant to the query (populated by the retriever's ranking step). It is\noptional with a ``None`` default so existing callers/constructions stay\nvalid. Provenance, when the backing object carries it, is attached as an\nextra field (``model_config`` allows extras).",
   "properties": {
     "kind": {
       "title": "Kind",
       "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
     },
     "score": {
       "title": "Score",
