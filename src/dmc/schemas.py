@@ -56,6 +56,7 @@ __all__ = [
     "TraceEvent",
     "PlanNode",
     "PlanGraph",
+    "ValidationReport",
     "SearchRequest",
     "SearchResult",
     "PrecheckRequest",
@@ -435,6 +436,33 @@ class PlanGraph(BaseModel):
         return self
 
 
+class ValidationReport(BaseModel):
+    """Result of validating a :class:`PlanGraph` (or similar object).
+
+    Validation does not raise for an invalid graph; instead it collects every
+    problem so callers can report all of them at once. ``ok`` is ``True`` only
+    when ``errors`` is empty. ``ok`` is kept in sync with ``errors`` by a
+    validator so a report cannot claim success while carrying errors.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    ok: bool = True
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _sync_ok(self) -> "ValidationReport":
+        # ``ok`` is authoritative-by-derivation: a report with errors is never ok.
+        self.ok = not self.errors
+        return self
+
+    @property
+    def valid(self) -> bool:
+        """Alias for :attr:`ok` (a graph is valid when there are no errors)."""
+        return self.ok
+
+
 # ---------------------------------------------------------------------------
 # Search
 # ---------------------------------------------------------------------------
@@ -612,6 +640,7 @@ EXPORTED_MODELS: dict[str, type[BaseModel]] = {
     "trace_event": TraceEvent,
     "plan_node": PlanNode,
     "plan_graph": PlanGraph,
+    "validation_report": ValidationReport,
     "search_request": SearchRequest,
     "search_result": SearchResult,
     "precheck_request": PrecheckRequest,

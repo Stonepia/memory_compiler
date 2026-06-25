@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "P0",
-  "current_gate": "M03_PLAN_GRAPH",
+  "current_gate": "M04_RENDERER",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -99,7 +99,7 @@
       "handoff_report": "reports/handoffs/M02_STORE_attempt_20260625072631.md"
     },
     "M03_PLAN_GRAPH": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M03_PLAN_GRAPH.md",
       "dependencies": [
         "M00_BOOTSTRAP",
@@ -107,20 +107,32 @@
         "M02_STORE"
       ],
       "blockers": [],
-      "attempts": []
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260625074525",
+          "agent": "module-impl-agent-M03",
+          "started_at": "2026-06-25T07:45:25Z",
+          "completed_at": "2026-06-25T07:50:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M03_PLAN_GRAPH_attempt_20260625074525.md",
+          "handoff_report": "reports/handoffs/M03_PLAN_GRAPH_attempt_20260625074525.md"
+        }
+      ],
+      "active_agent": "module-impl-agent-M03",
+      "attempt_id": "attempt_20260625074525",
+      "started_at": "2026-06-25T07:45:25Z",
+      "completed_at": "2026-06-25T07:50:00Z",
+      "acceptance_report": "reports/acceptance/M03_PLAN_GRAPH_attempt_20260625074525.md",
+      "handoff_report": "reports/handoffs/M03_PLAN_GRAPH_attempt_20260625074525.md"
     },
     "M04_RENDERER": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M04_RENDERER.md",
       "dependencies": [
         "M01_SCHEMAS",
         "M03_PLAN_GRAPH"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M03"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M05_RETRIEVER": {
@@ -288,5 +300,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T07:30:00Z"
+  "updated_at": "2026-06-25T07:50:00Z"
 }
