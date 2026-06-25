@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "P0",
-  "current_gate": "M02_STORE",
+  "current_gate": "M03_PLAN_GRAPH",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -73,28 +73,40 @@
       "handoff_report": "reports/handoffs/M01_SCHEMAS_attempt_20260625055917.md"
     },
     "M02_STORE": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M02_STORE.md",
       "dependencies": [
         "M00_BOOTSTRAP",
         "M01_SCHEMAS"
       ],
       "blockers": [],
-      "attempts": []
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260625072631",
+          "agent": "module-impl-agent-M02",
+          "started_at": "2026-06-25T07:26:31Z",
+          "completed_at": "2026-06-25T07:30:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M02_STORE_attempt_20260625072631.md",
+          "handoff_report": "reports/handoffs/M02_STORE_attempt_20260625072631.md"
+        }
+      ],
+      "active_agent": "module-impl-agent-M02",
+      "attempt_id": "attempt_20260625072631",
+      "started_at": "2026-06-25T07:26:31Z",
+      "completed_at": "2026-06-25T07:30:00Z",
+      "acceptance_report": "reports/acceptance/M02_STORE_attempt_20260625072631.md",
+      "handoff_report": "reports/handoffs/M02_STORE_attempt_20260625072631.md"
     },
     "M03_PLAN_GRAPH": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M03_PLAN_GRAPH.md",
       "dependencies": [
         "M00_BOOTSTRAP",
         "M01_SCHEMAS",
         "M02_STORE"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M02"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M04_RENDERER": {
@@ -112,17 +124,13 @@
       "attempts": []
     },
     "M05_RETRIEVER": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M05_RETRIEVER.md",
       "dependencies": [
         "M01_SCHEMAS",
         "M02_STORE"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M02"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M06_PRECHECK": {
@@ -141,17 +149,13 @@
       "attempts": []
     },
     "M07_RECORDER": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M07_RECORDER.md",
       "dependencies": [
         "M01_SCHEMAS",
         "M02_STORE"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M02"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M08_DISTILLER_EVALS": {
@@ -284,5 +288,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T07:16:10Z"
+  "updated_at": "2026-06-25T07:30:00Z"
 }
