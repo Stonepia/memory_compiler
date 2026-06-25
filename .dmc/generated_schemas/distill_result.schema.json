@@ -1,0 +1,531 @@
+{
+  "$defs": {
+    "EpisodeCard": {
+      "additionalProperties": true,
+      "description": "What happened in a session.",
+      "properties": {
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "highlights": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Highlights",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "outcome": {
+          "title": "Outcome",
+          "type": "string"
+        },
+        "provenance": {
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "minItems": 1,
+          "title": "Provenance",
+          "type": "array"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "task": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task"
+        }
+      },
+      "required": [
+        "id",
+        "session_id",
+        "summary",
+        "outcome",
+        "provenance"
+      ],
+      "title": "EpisodeCard",
+      "type": "object"
+    },
+    "EvalCase": {
+      "additionalProperties": true,
+      "description": "A test-set-like record produced from a session.\n\nAligned with ``templates/eval_case.schema.json``. Must include task, plan\nrefs, outcome, labels and a non-empty provenance list.",
+      "properties": {
+        "execution_trace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Trace"
+        },
+        "final_plan_graph": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Final Plan Graph"
+        },
+        "future_assertions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Future Assertions",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "initial_plan_graph": {
+          "title": "Initial Plan Graph",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": true,
+          "title": "Labels",
+          "type": "object"
+        },
+        "metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "outcome": {
+          "additionalProperties": true,
+          "title": "Outcome",
+          "type": "object"
+        },
+        "provenance": {
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "minItems": 1,
+          "title": "Provenance",
+          "type": "array"
+        },
+        "source_session": {
+          "title": "Source Session",
+          "type": "string"
+        },
+        "task": {
+          "$ref": "#/$defs/TaskRequest"
+        }
+      },
+      "required": [
+        "id",
+        "source_session",
+        "task",
+        "outcome",
+        "labels",
+        "initial_plan_graph",
+        "provenance"
+      ],
+      "title": "EvalCase",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": true,
+      "description": "A pointer to supporting evidence (artifact, file, event, ...).",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "uri"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    },
+    "FailureMode": {
+      "additionalProperties": true,
+      "description": "A repeatable wrong turn and its trigger.",
+      "properties": {
+        "avoidance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Avoidance"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "provenance": {
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "minItems": 1,
+          "title": "Provenance",
+          "type": "array"
+        },
+        "symptom": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Symptom"
+        },
+        "trigger": {
+          "title": "Trigger",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "trigger",
+        "description",
+        "provenance"
+      ],
+      "title": "FailureMode",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": true,
+      "description": "Where a piece of memory came from.\n\nAccepts either a structured mapping or a bare URI string (which is coerced\ninto ``{\"source\": <uri>}``). ``source`` must be a known-scheme URI.",
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "SkillUpdateProposal": {
+      "additionalProperties": true,
+      "description": "A pending change to a workflow/atom/knowledge object.",
+      "properties": {
+        "change_kind": {
+          "enum": [
+            "create",
+            "update",
+            "deprecate"
+          ],
+          "title": "Change Kind",
+          "type": "string"
+        },
+        "diff_summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Diff Summary"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "provenance": {
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "minItems": 1,
+          "title": "Provenance",
+          "type": "array"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "accepted",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "change_kind",
+        "rationale",
+        "provenance"
+      ],
+      "title": "SkillUpdateProposal",
+      "type": "object"
+    },
+    "TaskRequest": {
+      "additionalProperties": true,
+      "description": "A request to work on a task. Aligned with ``examples/sample_task.yaml``.",
+      "properties": {
+        "budget_tokens": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Budget Tokens"
+        },
+        "changed_files": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Changed Files",
+          "type": "array"
+        },
+        "constraints": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Constraints",
+          "type": "array"
+        },
+        "current_phase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Current Phase"
+        },
+        "hardware": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hardware",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repo"
+        },
+        "task": {
+          "title": "Task",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task"
+      ],
+      "title": "TaskRequest",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "description": "Aggregate output of :func:`dmc.distiller.distill_session`.\n\nCarries the durable objects derived from a session plus the storage refs\nof what was persisted. ``episode`` and ``eval_case`` are always produced;\n``failure_modes`` and ``skill_proposals`` may be empty when the session had\nno triggering events. Skill proposals are persisted to the pending area\n(``.dmc/proposals/pending``) only \u2014 they never mutate accepted skills.",
+  "properties": {
+    "episode": {
+      "$ref": "#/$defs/EpisodeCard"
+    },
+    "episode_uri": {
+      "title": "Episode Uri",
+      "type": "string"
+    },
+    "eval_case": {
+      "$ref": "#/$defs/EvalCase"
+    },
+    "eval_case_uri": {
+      "title": "Eval Case Uri",
+      "type": "string"
+    },
+    "failure_mode_uris": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Failure Mode Uris",
+      "type": "array"
+    },
+    "failure_modes": {
+      "items": {
+        "$ref": "#/$defs/FailureMode"
+      },
+      "title": "Failure Modes",
+      "type": "array"
+    },
+    "proposal_uris": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Proposal Uris",
+      "type": "array"
+    },
+    "session_id": {
+      "title": "Session Id",
+      "type": "string"
+    },
+    "skill_proposals": {
+      "items": {
+        "$ref": "#/$defs/SkillUpdateProposal"
+      },
+      "title": "Skill Proposals",
+      "type": "array"
+    }
+  },
+  "required": [
+    "session_id",
+    "episode",
+    "eval_case",
+    "episode_uri",
+    "eval_case_uri"
+  ],
+  "title": "DistillResult",
+  "type": "object"
+}

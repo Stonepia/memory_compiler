@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "P0",
-  "current_gate": "M08_DISTILLER_EVALS",
+  "current_gate": "M09_MCP_SERVER",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -245,7 +245,7 @@
       ]
     },
     "M08_DISTILLER_EVALS": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M08_DISTILLER_EVALS.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -253,10 +253,26 @@
         "M07_RECORDER"
       ],
       "blockers": [],
-      "attempts": []
+      "active_agent": "module-impl-agent-M08",
+      "attempt_id": "attempt_20260625084323",
+      "started_at": "2026-06-25T08:43:23Z",
+      "completed_at": "2026-06-25T08:45:00Z",
+      "acceptance_report": "reports/acceptance/M08_DISTILLER_EVALS_attempt_20260625084323.md",
+      "handoff_report": "reports/handoffs/M08_DISTILLER_EVALS_attempt_20260625084323.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260625084323",
+          "agent": "module-impl-agent-M08",
+          "started_at": "2026-06-25T08:43:23Z",
+          "completed_at": "2026-06-25T08:45:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M08_DISTILLER_EVALS_attempt_20260625084323.md",
+          "handoff_report": "reports/handoffs/M08_DISTILLER_EVALS_attempt_20260625084323.md"
+        }
+      ]
     },
     "M09_MCP_SERVER": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M09_MCP_SERVER.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -268,11 +284,7 @@
         "M07_RECORDER",
         "M08_DISTILLER_EVALS"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for core modules"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M10_ADAPTERS": {
@@ -370,5 +382,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T01:45:00Z"
+  "updated_at": "2026-06-25T08:45:00Z"
 }

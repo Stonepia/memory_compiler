@@ -66,6 +66,7 @@ __all__ = [
     "FailureMode",
     "SkillUpdateProposal",
     "EvalCase",
+    "DistillResult",
     "AgentState",
     "EXPORTED_MODELS",
     "export_json_schemas",
@@ -624,6 +625,34 @@ class EvalCase(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Distillation result (M08_DISTILLER_EVALS aggregate output)
+# ---------------------------------------------------------------------------
+
+
+class DistillResult(BaseModel):
+    """Aggregate output of :func:`dmc.distiller.distill_session`.
+
+    Carries the durable objects derived from a session plus the storage refs
+    of what was persisted. ``episode`` and ``eval_case`` are always produced;
+    ``failure_modes`` and ``skill_proposals`` may be empty when the session had
+    no triggering events. Skill proposals are persisted to the pending area
+    (``.dmc/proposals/pending``) only — they never mutate accepted skills.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    session_id: Slug
+    episode: EpisodeCard
+    eval_case: EvalCase
+    failure_modes: list[FailureMode] = Field(default_factory=list)
+    skill_proposals: list[SkillUpdateProposal] = Field(default_factory=list)
+    episode_uri: Uri
+    eval_case_uri: Uri
+    failure_mode_uris: list[Uri] = Field(default_factory=list)
+    proposal_uris: list[Uri] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
 # Agent state (permissive mirror of agent_state.json)
 # ---------------------------------------------------------------------------
 
@@ -679,6 +708,7 @@ EXPORTED_MODELS: dict[str, type[BaseModel]] = {
     "failure_mode": FailureMode,
     "skill_update_proposal": SkillUpdateProposal,
     "eval_case": EvalCase,
+    "distill_result": DistillResult,
     "agent_state": AgentState,
 }
 
