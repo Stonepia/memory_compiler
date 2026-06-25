@@ -1,0 +1,49 @@
+{
+  "additionalProperties": true,
+  "description": "A single local search hit.",
+  "properties": {
+    "kind": {
+      "title": "Kind",
+      "type": "string"
+    },
+    "score": {
+      "title": "Score",
+      "type": "number"
+    },
+    "snippet": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Snippet"
+    },
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Title"
+    },
+    "uri": {
+      "title": "Uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "uri",
+    "score",
+    "kind"
+  ],
+  "title": "SearchResult",
+  "type": "object"
+}

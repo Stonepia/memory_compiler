@@ -1,0 +1,49 @@
+{
+  "additionalProperties": true,
+  "description": "Base skill card shared by all tiers.",
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Summary"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "tier": {
+      "enum": [
+        0,
+        1,
+        2
+      ],
+      "title": "Tier",
+      "type": "integer"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "tier",
+    "title"
+  ],
+  "title": "SkillCard",
+  "type": "object"
+}

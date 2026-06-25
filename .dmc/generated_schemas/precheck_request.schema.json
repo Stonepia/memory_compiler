@@ -1,0 +1,63 @@
+{
+  "additionalProperties": true,
+  "description": "A proposed action to validate before execution.",
+  "properties": {
+    "action": {
+      "title": "Action",
+      "type": "string"
+    },
+    "command": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Command"
+    },
+    "files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "intent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Intent"
+    },
+    "risk_level": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Risk Level"
+    },
+    "task_context": {
+      "additionalProperties": true,
+      "title": "Task Context",
+      "type": "object"
+    }
+  },
+  "required": [
+    "action"
+  ],
+  "title": "PrecheckRequest",
+  "type": "object"
+}

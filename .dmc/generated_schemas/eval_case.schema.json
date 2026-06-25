@@ -1,0 +1,228 @@
+{
+  "$defs": {
+    "Provenance": {
+      "additionalProperties": true,
+      "description": "Where a piece of memory came from.\n\nAccepts either a structured mapping or a bare URI string (which is coerced\ninto ``{\"source\": <uri>}``). ``source`` must be a known-scheme URI.",
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "TaskRequest": {
+      "additionalProperties": true,
+      "description": "A request to work on a task. Aligned with ``examples/sample_task.yaml``.",
+      "properties": {
+        "budget_tokens": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Budget Tokens"
+        },
+        "changed_files": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Changed Files",
+          "type": "array"
+        },
+        "constraints": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Constraints",
+          "type": "array"
+        },
+        "current_phase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Current Phase"
+        },
+        "hardware": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hardware",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repo"
+        },
+        "task": {
+          "title": "Task",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task"
+      ],
+      "title": "TaskRequest",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "description": "A test-set-like record produced from a session.\n\nAligned with ``templates/eval_case.schema.json``. Must include task, plan\nrefs, outcome, labels and a non-empty provenance list.",
+  "properties": {
+    "execution_trace": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Trace"
+    },
+    "final_plan_graph": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Final Plan Graph"
+    },
+    "future_assertions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Future Assertions",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "initial_plan_graph": {
+      "title": "Initial Plan Graph",
+      "type": "string"
+    },
+    "labels": {
+      "additionalProperties": true,
+      "title": "Labels",
+      "type": "object"
+    },
+    "metrics": {
+      "additionalProperties": true,
+      "title": "Metrics",
+      "type": "object"
+    },
+    "outcome": {
+      "additionalProperties": true,
+      "title": "Outcome",
+      "type": "object"
+    },
+    "provenance": {
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      },
+      "minItems": 1,
+      "title": "Provenance",
+      "type": "array"
+    },
+    "source_session": {
+      "title": "Source Session",
+      "type": "string"
+    },
+    "task": {
+      "$ref": "#/$defs/TaskRequest"
+    }
+  },
+  "required": [
+    "id",
+    "source_session",
+    "task",
+    "outcome",
+    "labels",
+    "initial_plan_graph",
+    "provenance"
+  ],
+  "title": "EvalCase",
+  "type": "object"
+}

@@ -1,0 +1,55 @@
+{
+  "additionalProperties": true,
+  "description": "Always-on evidence/reproducibility policy.",
+  "properties": {
+    "always_on": {
+      "default": true,
+      "title": "Always On",
+      "type": "boolean"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "policy": {
+      "title": "Policy",
+      "type": "string"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Summary"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "tier": {
+      "const": 0,
+      "default": 0,
+      "title": "Tier",
+      "type": "integer"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "policy"
+  ],
+  "title": "Tier0Policy",
+  "type": "object"
+}

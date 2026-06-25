@@ -1,0 +1,69 @@
+{
+  "additionalProperties": true,
+  "description": "An executable atomic action / tool pattern.",
+  "properties": {
+    "command": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Command"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "pattern": {
+      "title": "Pattern",
+      "type": "string"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Summary"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "tier": {
+      "const": 2,
+      "default": 2,
+      "title": "Tier",
+      "type": "integer"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "tools": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tools",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "pattern"
+  ],
+  "title": "Tier2Atom",
+  "type": "object"
+}

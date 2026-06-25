@@ -1,0 +1,82 @@
+{
+  "additionalProperties": true,
+  "description": "A permissive model of ``agent_state.json``.\n\nKept intentionally loose: it is the coordination file, owned by the state\nprotocol, not by any single module. Unknown keys are preserved.",
+  "properties": {
+    "blockers": {
+      "items": {},
+      "title": "Blockers",
+      "type": "array"
+    },
+    "current_gate": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Current Gate"
+    },
+    "current_phase": {
+      "title": "Current Phase",
+      "type": "string"
+    },
+    "decisions": {
+      "items": {},
+      "title": "Decisions",
+      "type": "array"
+    },
+    "global_rules": {
+      "additionalProperties": true,
+      "title": "Global Rules",
+      "type": "object"
+    },
+    "handoffs": {
+      "items": {},
+      "title": "Handoffs",
+      "type": "array"
+    },
+    "modules": {
+      "additionalProperties": true,
+      "title": "Modules",
+      "type": "object"
+    },
+    "project": {
+      "additionalProperties": true,
+      "title": "Project",
+      "type": "object"
+    },
+    "quality_gates": {
+      "additionalProperties": true,
+      "title": "Quality Gates",
+      "type": "object"
+    },
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "current_phase",
+    "modules",
+    "quality_gates"
+  ],
+  "title": "AgentState",
+  "type": "object"
+}

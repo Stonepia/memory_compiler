@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "P0",
-  "current_gate": "M01_SCHEMAS",
+  "current_gate": "M02_STORE",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -41,26 +41,45 @@
       "handoff_report": "reports/handoffs/M00_BOOTSTRAP_attempt_20260625054019.md"
     },
     "M01_SCHEMAS": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M01_SCHEMAS.md",
       "dependencies": [
         "M00_BOOTSTRAP"
       ],
       "blockers": [],
-      "attempts": []
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260625055917",
+          "agent": "module-impl-agent-M01",
+          "started_at": "2026-06-25T05:59:17Z",
+          "completed_at": "2026-06-25T07:16:10Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M01_SCHEMAS_attempt_20260625055917.md",
+          "handoff_report": "reports/handoffs/M01_SCHEMAS_attempt_20260625055917.md",
+          "review": {
+            "result": "needs_revision",
+            "summary": "M01_SCHEMAS did not fully meet its module contract: EvalCase did not require plan refs, and the generated PlanGraph JSON schema was misaligned with the template required fields (missing nodes/dependencies/success_criteria); handoff text mis-stated dependent unblocking.",
+            "resolved": true,
+            "resolved_at": "2026-06-25T07:16:10Z",
+            "resolution": "EvalCase now requires initial_plan_graph (plan ref); PlanGraph.nodes, PlanNode.dependencies and PlanNode.success_criteria made required and template-aligned; generated schemas regenerated; handoff corrected to state only M02_STORE is ready. Acceptance re-run green (pytest 62 passed, ruff clean, dmc --help exit 0). Tests strengthened, not weakened."
+          }
+        }
+      ],
+      "active_agent": "module-impl-agent-M01",
+      "attempt_id": "attempt_20260625055917",
+      "started_at": "2026-06-25T05:59:17Z",
+      "completed_at": "2026-06-25T07:16:10Z",
+      "acceptance_report": "reports/acceptance/M01_SCHEMAS_attempt_20260625055917.md",
+      "handoff_report": "reports/handoffs/M01_SCHEMAS_attempt_20260625055917.md"
     },
     "M02_STORE": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M02_STORE.md",
       "dependencies": [
         "M00_BOOTSTRAP",
         "M01_SCHEMAS"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M01"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M03_PLAN_GRAPH": {
@@ -265,5 +284,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T05:42:00Z"
+  "updated_at": "2026-06-25T07:16:10Z"
 }

@@ -1,0 +1,39 @@
+{
+  "additionalProperties": true,
+  "description": "A pointer to supporting evidence (artifact, file, event, ...).",
+  "properties": {
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Kind"
+    },
+    "uri": {
+      "title": "Uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "uri"
+  ],
+  "title": "EvidenceRef",
+  "type": "object"
+}

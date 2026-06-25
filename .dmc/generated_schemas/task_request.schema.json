@@ -1,0 +1,89 @@
+{
+  "additionalProperties": true,
+  "description": "A request to work on a task. Aligned with ``examples/sample_task.yaml``.",
+  "properties": {
+    "budget_tokens": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Budget Tokens"
+    },
+    "changed_files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Changed Files",
+      "type": "array"
+    },
+    "constraints": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Constraints",
+      "type": "array"
+    },
+    "current_phase": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Current Phase"
+    },
+    "hardware": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Hardware",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "mode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mode"
+    },
+    "repo": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Repo"
+    },
+    "task": {
+      "title": "Task",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "task"
+  ],
+  "title": "TaskRequest",
+  "type": "object"
+}

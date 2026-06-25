@@ -1,0 +1,59 @@
+{
+  "additionalProperties": true,
+  "description": "A stable, reusable task workflow.",
+  "properties": {
+    "applies_to": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Applies To",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Steps",
+      "type": "array"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Summary"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "tier": {
+      "const": 1,
+      "default": 1,
+      "title": "Tier",
+      "type": "integer"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title"
+  ],
+  "title": "Tier1Workflow",
+  "type": "object"
+}

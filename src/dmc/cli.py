@@ -105,6 +105,19 @@ def distill(
     _not_implemented("distill", "M08_DISTILLER_EVALS")
 
 
+@app.command(name="schemas-export")
+def schemas_export(
+    out: str = typer.Option(
+        ".dmc/generated_schemas", "--out", help="Output directory for JSON schemas."
+    ),
+) -> None:
+    """Export DMC model JSON schemas to a directory (owned by M01_SCHEMAS)."""
+    from dmc.schemas import export_json_schemas
+
+    written = export_json_schemas(out)
+    typer.echo(f"Wrote {len(written)} schema files to {out}")
+
+
 @app.command(name="export-agent-bundle")
 def export_agent_bundle(
     target: str = typer.Option(..., "--target", help="Adapter target, e.g. codex."),

@@ -1,0 +1,227 @@
+{
+  "$defs": {
+    "Provenance": {
+      "additionalProperties": true,
+      "description": "Where a piece of memory came from.\n\nAccepts either a structured mapping or a bare URI string (which is coerced\ninto ``{\"source\": <uri>}``). ``source`` must be a known-scheme URI.",
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "TraceAction": {
+      "additionalProperties": true,
+      "description": "The action taken in an event. ``kind`` is required.",
+      "properties": {
+        "command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Command"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Files",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "TraceAction",
+      "type": "object"
+    },
+    "TraceObservation": {
+      "additionalProperties": true,
+      "description": "The observed result of an action. ``outcome`` is required.",
+      "properties": {
+        "metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "outcome": {
+          "title": "Outcome",
+          "type": "string"
+        }
+      },
+      "required": [
+        "outcome"
+      ],
+      "title": "TraceObservation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "description": "An action-level event from a session.\n\nMust carry ``session_id``, ``event_id``, ``phase``, ``action.kind`` and\n``observation.outcome`` and a non-empty provenance list.",
+  "properties": {
+    "action": {
+      "$ref": "#/$defs/TraceAction"
+    },
+    "actor": {
+      "enum": [
+        "agent",
+        "human",
+        "tool",
+        "system"
+      ],
+      "title": "Actor",
+      "type": "string"
+    },
+    "artifacts": {
+      "additionalProperties": true,
+      "title": "Artifacts",
+      "type": "object"
+    },
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "intent": {
+      "title": "Intent",
+      "type": "string"
+    },
+    "memory_hooks": {
+      "additionalProperties": true,
+      "title": "Memory Hooks",
+      "type": "object"
+    },
+    "observation": {
+      "$ref": "#/$defs/TraceObservation"
+    },
+    "phase": {
+      "enum": [
+        "localize",
+        "inspect",
+        "plan",
+        "edit",
+        "test",
+        "benchmark",
+        "profile",
+        "analyze",
+        "validate",
+        "review",
+        "distill"
+      ],
+      "title": "Phase",
+      "type": "string"
+    },
+    "provenance": {
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      },
+      "minItems": 1,
+      "title": "Provenance",
+      "type": "array"
+    },
+    "reasoning_summary": {
+      "additionalProperties": true,
+      "title": "Reasoning Summary",
+      "type": "object"
+    },
+    "repo_state": {
+      "additionalProperties": true,
+      "title": "Repo State",
+      "type": "object"
+    },
+    "run_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Run Id"
+    },
+    "session_id": {
+      "title": "Session Id",
+      "type": "string"
+    },
+    "step_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Step Id"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "session_id",
+    "phase",
+    "actor",
+    "intent",
+    "action",
+    "observation",
+    "timestamp",
+    "provenance"
+  ],
+  "title": "TraceEvent",
+  "type": "object"
+}
