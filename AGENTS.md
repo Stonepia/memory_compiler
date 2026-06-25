@@ -30,6 +30,11 @@ in `.dmc/state/project_state.yaml` and `agent_state.json`.
    modes, and benchmark claims carry provenance.
 10. **User maintenance cost matters.** Prefer fewer modules, plain files, and
     local-first behavior.
+11. **uv-only execution. Never the system interpreter.** Run all Python through
+    `uv run` (or `uv run --with <pkg>` for tooling not in project deps). Never
+    invoke bare `python`/`python3`, a python shebang, or any globally-installed
+    package. Relying on the system interpreter is a forbidden hidden
+    local-machine dependency and breaks reproducibility on a clean checkout.
 
 ## Forbidden in v0
 
@@ -66,3 +71,16 @@ uv run dmc --help
 State writes are atomic: write `agent_state.json.tmp`, validate it against
 `templates/agent_state.schema.json`, then replace `agent_state.json`. Never
 mark a module `done` without passing acceptance and a written report.
+
+## State-schema validation path
+
+`jsonschema` is intentionally **not** a project dependency, so it is absent
+from the uv venv. Validating `agent_state.json` against
+`templates/agent_state.schema.json` must therefore use uv's ephemeral layer —
+never the system interpreter (which may or may not have `jsonschema` installed):
+
+```bash
+uv run --with jsonschema python -c "import json, jsonschema; jsonschema.validate(json.load(open('agent_state.json')), json.load(open('templates/agent_state.schema.json')))"
+```
+
+Do not add `jsonschema` to `pyproject.toml`. Do not fall back to `python3`.
