@@ -3,9 +3,15 @@
 # (AGENTS.md, skills, instructions) must NOT contain dynamic state.
 schema_version: "0.1.0"
 project_status: initialized
-current_phase: P0
-last_completed_module: M00_BOOTSTRAP
-updated_at: "2026-06-25T05:40:19Z"
+current_phase: V0
+last_completed_module: M08_DISTILLER_EVALS
+current_gate: M09_MCP_SERVER
+updated_at: "2026-06-25T09:00:00Z"
 notes:
-  - "Bootstrap complete: repo skeleton, uv environment, and .dmc tree created."
+  - "M01-M08 local core implemented; M08_CORE_READY review fixes applied (Issue #1)."
+  - "Blocker 1 fixed: singular/plural URI convention aligned across M05/M06/M08."
+  - "Blocker 2 fixed: proposals indexed via DMCStore.save_pending_proposal."
+  - "Blocker 3 fixed: SearchRequest now has filters + budget_tokens fields."
+  - "Blocker 4 fixed: config sqlite_path and project_state aligned."
+  - "Blocker 5 addressed: M09 module card clarifies lazy wrapper for export-agent-bundle."
 facts: []

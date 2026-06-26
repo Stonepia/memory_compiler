@@ -32,10 +32,6 @@ Shapes are imported from ``src/dmc/schemas.py``; none are redefined here.
 from __future__ import annotations
 
 from collections import Counter
-from pathlib import Path
-
-import yaml
-
 from dmc.schemas import (
     DistillResult,
     EpisodeCard,
@@ -368,33 +364,6 @@ def propose_skill_updates(
 # ---------------------------------------------------------------------------
 
 
-def _pending_proposals_dir(store: DMCStore) -> Path:
-    return store.dmc_dir / "proposals" / "pending"
-
-
-def _write_pending_proposal(store: DMCStore, proposal: SkillUpdateProposal) -> str:
-    """Persist a proposal to ``.dmc/proposals/pending`` and return its URI.
-
-    The store exposes no proposal-specific API, so the proposal is written to
-    the canonical pending area documented in the repo layout. It is never
-    written under ``.dmc/skills`` (accepted skills are not mutated here).
-    """
-    pending_dir = _pending_proposals_dir(store)
-    try:
-        pending_dir.mkdir(parents=True, exist_ok=True)
-        target = pending_dir / f"{proposal.id}.yaml"
-        payload = proposal.model_dump(mode="json")
-        target.write_text(
-            yaml.safe_dump(payload, sort_keys=True, allow_unicode=True),
-            encoding="utf-8",
-        )
-    except OSError as exc:  # pragma: no cover - filesystem failure
-        raise DMCValidationError(
-            f"failed to write pending proposal {proposal.id!r}: {exc}"
-        ) from exc
-    return f"proposal://pending/{proposal.id}"
-
-
 def distill_session(session_id: str, store: DMCStore) -> DistillResult:
     """Distill a session into durable memory objects and persist them.
 
@@ -420,7 +389,7 @@ def distill_session(session_id: str, store: DMCStore) -> DistillResult:
         store.write_object("failure_mode", fm.id, fm) for fm in failure_modes
     ]
     proposal_uris = [
-        _write_pending_proposal(store, proposal) for proposal in skill_proposals
+        store.save_pending_proposal(proposal) for proposal in skill_proposals
     ]
 
     return DistillResult(

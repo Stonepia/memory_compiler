@@ -269,6 +269,102 @@ def test_context_pack_empty_results_placeholder() -> None:
     assert _estimate(pack) <= 50
 
 
+# ---------------------------------------------------------------------------
+# Blocker 1: distilled objects searchable through plural scope names (Issue #1)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def distilled_store(tmp_path):
+    """A store seeded with M08-distiller-style objects (singular kind)."""
+    from dmc.distiller import distill_session
+    from dmc.recorder import record_event
+    from dmc.schemas import TraceAction, TraceEvent, TraceObservation
+
+    store = DMCStore(tmp_path)
+    store.initialize()
+
+    session_id = "test-distilled-scope"
+    for ev_id, phase, outcome, intent in [
+        ("d1", "test", "success", "run unit tests"),
+        ("d2", "validate", "passed", "validate fix"),
+        ("d3", "benchmark", "regressed: oversized tile", "benchmark hot loop"),
+    ]:
+        record_event(
+            TraceEvent(
+                event_id=ev_id,
+                session_id=session_id,
+                phase=phase,
+                actor="agent",
+                intent=intent,
+                action=TraceAction(kind="test_run"),
+                observation=TraceObservation(outcome=outcome),
+                timestamp="2026-06-25T00:00:00Z",
+                provenance=[{"source": f"session://{session_id}"}],
+            ),
+            store,
+        )
+    distill_session(session_id, store)
+    return store
+
+
+def test_search_episodes_scope_finds_distilled_episode(distilled_store: DMCStore) -> None:
+    req = SearchRequest(query="session", scopes=["episodes"])
+    results = search(req, distilled_store)
+    assert results, "search(scopes=['episodes']) must find M08-distilled episode objects"
+    kinds = {r.kind for r in results}
+    assert "episode" in kinds
+
+
+def test_search_failure_modes_scope_finds_distilled_failure_mode(
+    distilled_store: DMCStore,
+) -> None:
+    req = SearchRequest(query="oversized tile", scopes=["failure_modes"])
+    results = search(req, distilled_store)
+    assert results, "search(scopes=['failure_modes']) must find M08-distilled failure modes"
+    kinds = {r.kind for r in results}
+    assert "failure_mode" in kinds
+
+
+def test_search_eval_cases_scope_finds_distilled_eval_case(
+    distilled_store: DMCStore,
+) -> None:
+    req = SearchRequest(query="session", scopes=["eval_cases"])
+    results = search(req, distilled_store)
+    assert results, "search(scopes=['eval_cases']) must find M08-distilled eval cases"
+    kinds = {r.kind for r in results}
+    assert "eval_case" in kinds
+
+
+# ---------------------------------------------------------------------------
+# Blocker 3: SearchRequest schema fields (Issue #1)
+# ---------------------------------------------------------------------------
+
+
+def test_search_request_schema_has_filters_and_budget_tokens() -> None:
+    schema = SearchRequest.model_json_schema()
+    props = schema.get("properties", {})
+    assert "filters" in props, "SearchRequest schema must include 'filters'"
+    assert "budget_tokens" in props, "SearchRequest schema must include 'budget_tokens'"
+
+
+def test_search_request_filters_first_class(seeded_store: DMCStore) -> None:
+    """filters is now a first-class field, not just an extra field."""
+    req = SearchRequest(query="occupancy", scopes=[], filters={"kind": "failure_modes"})
+    results = search(req, seeded_store)
+    assert results
+    assert all(r.kind == "failure_modes" for r in results)
+
+
+def test_search_request_budget_tokens_field(seeded_store: DMCStore) -> None:
+    req = SearchRequest(query="occupancy", scopes=[], budget_tokens=500)
+    # budget_tokens is accessible as a typed field
+    assert req.budget_tokens == 500
+    # search still works
+    results = search(req, seeded_store)
+    assert isinstance(results, list)
+
+
 def test_context_pack_deterministic() -> None:
     results = [
         SearchResult(uri="dmc://skills/a", score=1.0, kind="skills", title="A"),

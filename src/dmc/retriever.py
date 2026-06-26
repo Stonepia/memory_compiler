@@ -49,19 +49,21 @@ SUPPORTED_SCOPES: tuple[str, ...] = (
     "proposals",
 )
 
-#: Map a DMC search scope to the ``scope`` column used by the store's FTS index.
-#: Most scopes are stored as generic objects whose ``scope`` equals their
-#: ``kind`` (so the names match 1:1). ``project_state`` is the exception: the
-#: store indexes it under the ``"state"`` scope.
-SCOPE_TO_STORE_SCOPE: dict[str, str] = {
-    "project_state": "state",
-    "skills": "skills",
-    "knowledge": "knowledge",
-    "artifacts": "artifacts",
-    "episodes": "episodes",
-    "failure_modes": "failure_modes",
-    "eval_cases": "eval_cases",
-    "proposals": "proposals",
+#: Map a user-facing DMC search scope to the ``scope`` column(s) used by the
+#: store's FTS index. ``project_state`` is indexed under ``"state"``.
+#: Plural user-facing scopes (``episodes``, ``failure_modes``, ``eval_cases``,
+#: ``proposals``) map to BOTH the canonical singular kind (written by M08
+#: distiller) AND the legacy plural form (for backward compat with objects
+#: written directly via ``write_object("episodes", ...)`` etc.).
+SCOPE_TO_STORE_SCOPE: dict[str, list[str]] = {
+    "project_state": ["state"],
+    "skills": ["skills"],
+    "knowledge": ["knowledge"],
+    "artifacts": ["artifacts"],
+    "episodes": ["episode", "episodes"],
+    "failure_modes": ["failure_mode", "failure_modes"],
+    "eval_cases": ["eval_case", "eval_cases"],
+    "proposals": ["proposal", "proposals"],
 }
 
 #: Deterministic token-estimate divisor (~4 chars per token).
@@ -96,15 +98,16 @@ def search(request: SearchRequest, store: DMCStore) -> list[SearchResult]:
         # Every requested scope was unknown — clear, non-crashing behaviour.
         return []
 
-    # Translate to store scopes (dedup, preserve order).
+    # Translate to store scopes (dedup, preserve order). Each user scope may
+    # expand to multiple store scopes (e.g. "episodes" -> ["episode", "episodes"]).
     store_scopes: list[str] = []
     for scope in valid_scopes:
-        mapped = SCOPE_TO_STORE_SCOPE[scope]
-        if mapped not in store_scopes:
-            store_scopes.append(mapped)
+        for mapped in SCOPE_TO_STORE_SCOPE[scope]:
+            if mapped not in store_scopes:
+                store_scopes.append(mapped)
 
     limit = request.limit if request.limit and request.limit > 0 else 10
-    filters = getattr(request, "filters", None)
+    filters = request.filters if request.filters else None
 
     # Fetch a few extra rows so ranking/filtering can reorder beyond the raw
     # bm25 top-N before we trim to the caller's limit.

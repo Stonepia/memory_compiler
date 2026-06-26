@@ -362,7 +362,16 @@
       "attempts": []
     }
   },
-  "handoffs": [],
+  "handoffs": [
+    {
+      "milestone": "M08_CORE_READY",
+      "attempt_id": "attempt_20260625090000",
+      "result": "GO",
+      "report": "reports/integration/M08_CORE_READY_REVIEW_attempt_20260625090000.md",
+      "completed_at": "2026-06-25T09:00:00Z",
+      "summary": "All 5 blockers from Issue #1 resolved. 210 tests pass. M09 ready to implement."
+    }
+  ],
   "decisions": [],
   "blockers": [],
   "quality_gates": {
@@ -382,5 +391,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T08:45:00Z"
+  "updated_at": "2026-06-25T09:00:00Z"
 }

@@ -46,6 +46,19 @@ dmc_propose_skill_update
 dmc_export_agent_bundle
 ```
 
+> **Implementation note for `dmc_export_agent_bundle`**: Adapter bundle generation
+> is owned by M10_ADAPTERS. M09 must expose this as a thin lazy wrapper only:
+>
+> ```python
+> try:
+>     from dmc.adapters import export_agent_bundle
+>     result = export_agent_bundle(...)
+> except ImportError:
+>     return {"ok": False, "errors": ["M10_ADAPTERS not yet implemented"], "data": None}
+> ```
+>
+> No M10 adapter logic should be duplicated inside M09.
+
 ### Required MCP resources
 
 ```text

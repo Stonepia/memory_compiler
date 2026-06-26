@@ -477,7 +477,9 @@ class SearchRequest(BaseModel):
 
     query: str
     scopes: list[str] = Field(default_factory=list)
+    filters: dict[str, Any] = Field(default_factory=dict)
     limit: int = 10
+    budget_tokens: int | None = None
 
 
 class SearchResult(BaseModel):

@@ -16,7 +16,7 @@ paths:
   adapters: .dmc/adapters
 store:
   # SQLite + FTS5 index location (created by M02_STORE).
-  sqlite_path: .dmc/dmc.sqlite3
+  sqlite_path: .dmc/index.sqlite3
 memory:
   events_log: .dmc/memory/events.jsonl
 artifacts:

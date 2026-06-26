@@ -40,6 +40,7 @@ from dmc.schemas import (
     ArtifactCard,
     ProjectState,
     SearchResult,
+    SkillUpdateProposal,
     TraceEvent,
 )
 
@@ -90,6 +91,7 @@ _URI_RE = re.compile(r"^dmc://(?P<kind>[A-Za-z0-9._-]+)/(?P<id>.+)$")
 _KIND_PROJECT_STATE = "project_state"
 _KIND_ARTIFACT = "artifact"
 _KIND_EVENT = "event"
+_KIND_PROPOSAL = "proposal"
 
 
 class DMCStore:
@@ -373,6 +375,14 @@ class DMCStore:
 
         if kind == _KIND_ARTIFACT:
             candidate_dir = self.artifacts_cards_dir
+        elif kind == _KIND_PROPOSAL:
+            # Proposals are persisted under .dmc/proposals/pending/<id>.yaml,
+            # not under the generic objects/ tree.
+            pending_dir = self.dmc_dir / "proposals" / "pending"
+            path = self._find_object_file(pending_dir, obj_id)
+            if path is None:
+                raise DMCNotFoundError(f"no object file found for uri {uri!r}")
+            return self._deserialize(path)
         else:
             candidate_dir = self.objects_dir / kind
 
@@ -550,6 +560,50 @@ class DMCStore:
             return True
         except ValueError:
             return False
+
+    # ------------------------------------------------------------------
+    # Proposals (pending, not accepted skills)
+    # ------------------------------------------------------------------
+
+    def save_pending_proposal(self, proposal: SkillUpdateProposal) -> str:
+        """Persist a pending :class:`SkillUpdateProposal` and index it for search.
+
+        Writes to ``.dmc/proposals/pending/<id>.yaml`` (source of truth) and
+        indexes the proposal with ``scope="proposal"`` so that
+        ``search(scopes=["proposals"])`` can find it.  Returns the canonical
+        ``dmc://proposal/<id>`` URI.
+
+        Proposals are never written under ``.dmc/skills``; accepted skills are
+        immutable except via the review path.
+        """
+        if not isinstance(proposal, SkillUpdateProposal):
+            raise DMCValidationError("save_pending_proposal requires a SkillUpdateProposal")
+        payload = proposal.model_dump(mode="json")
+        pending_dir = self.dmc_dir / "proposals" / "pending"
+        try:
+            pending_dir.mkdir(parents=True, exist_ok=True)
+            target = pending_dir / f"{proposal.id}.yaml"
+            target.write_text(
+                yaml.safe_dump(payload, sort_keys=True, allow_unicode=True),
+                encoding="utf-8",
+            )
+        except OSError as exc:  # pragma: no cover - filesystem failure
+            raise DMCStorageError(
+                f"failed to write pending proposal {proposal.id!r}: {exc}"
+            ) from exc
+
+        uri = f"dmc://{_KIND_PROPOSAL}/{proposal.id}"
+        conn = self._connect()
+        title = str(payload.get("rationale") or payload.get("diff_summary") or proposal.id)
+        self._index_row(
+            conn,
+            uri=uri,
+            kind=_KIND_PROPOSAL,
+            scope=_KIND_PROPOSAL,
+            title=title,
+            body=self._searchable_body(payload),
+        )
+        return uri
 
     # ------------------------------------------------------------------
     # Search

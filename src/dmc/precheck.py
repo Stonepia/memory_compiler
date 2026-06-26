@@ -221,20 +221,31 @@ def _request_blob(request: PrecheckRequest) -> str:
 def _load_failure_modes(store: DMCStore) -> list[FailureMode]:
     """Load every stored failure mode (deterministic, sorted by id).
 
-    Failure modes are generic objects stored under ``objects/failure_modes/``
-    (i.e. written via ``store.write_object("failure_modes", id, FailureMode)``).
+    Failure modes are written by M08 distiller via
+    ``store.write_object("failure_mode", id, FailureMode)`` to
+    ``objects/failure_mode/``.  The canonical directory is ``failure_mode``
+    (singular); ``failure_modes`` (plural) is a backward-compatible fallback
+    for objects written before the singular convention was adopted.
     Malformed files are skipped rather than crashing the precheck.
     """
-    directory = store.objects_dir / "failure_modes"
-    if not directory.exists():
-        return []
+    canonical_dir = store.objects_dir / "failure_mode"
+    compat_dir = store.objects_dir / "failure_modes"
+
+    # Merge files from both directories; canonical singular wins on id collision.
+    files: dict[str, tuple[str, object]] = {}  # stem -> (uri, path)
+    for directory, uri_kind in ((compat_dir, "failure_modes"), (canonical_dir, "failure_mode")):
+        if not directory.exists():
+            continue
+        for path in sorted(directory.iterdir()):
+            if not path.is_file():
+                continue
+            if path.suffix.lower().lstrip(".") not in {"yaml", "yml", "json", "md", "markdown"}:
+                continue
+            files[path.stem] = (f"dmc://{uri_kind}/{path.stem}", path)
+
     modes: list[FailureMode] = []
-    for path in sorted(directory.iterdir()):
-        if not path.is_file():
-            continue
-        if path.suffix.lower().lstrip(".") not in {"yaml", "yml", "json", "md", "markdown"}:
-            continue
-        uri = f"dmc://failure_modes/{path.stem}"
+    for stem in sorted(files):
+        uri, _ = files[stem]
         try:
             data = store.read_object(uri)
             modes.append(FailureMode.model_validate(data))

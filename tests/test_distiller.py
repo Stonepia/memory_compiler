@@ -263,11 +263,11 @@ def test_distill_session_persists_and_is_deterministic(store: DMCStore) -> None:
     assert len(result.failure_mode_uris) == 1
     assert store.read_object(result.failure_mode_uris[0])["trigger"]
 
-    # skill proposals go to .dmc/proposals/pending ONLY
+    # skill proposals go to .dmc/proposals/pending ONLY and are indexed
     pending_dir = store.dmc_dir / "proposals" / "pending"
     pending_files = sorted(p.name for p in pending_dir.glob("*.yaml"))
     assert pending_files
-    assert all(uri.startswith("proposal://pending/") for uri in result.proposal_uris)
+    assert all(uri.startswith("dmc://proposal/") for uri in result.proposal_uris)
     # nothing written under .dmc/skills
     skill_files = [p for p in (store.dmc_dir / "skills").rglob("*") if p.is_file()]
     assert skill_files == []
@@ -310,3 +310,91 @@ def test_distill_session_clean_session_has_no_failures(store: DMCStore) -> None:
     # useful_memory still captured on the eval case labels
     assert result.eval_case.labels["useful_memory"] == ["c1", "c2"]
     assert result.eval_case.labels["wrong_turn"] == []
+
+
+# ---------------------------------------------------------------------------
+# Blocker 2: pending proposals are indexed and searchable (Issue #1)
+# ---------------------------------------------------------------------------
+
+
+def test_distill_session_proposal_is_searchable_via_store(store: DMCStore) -> None:
+    """Proposals written by distill_session must be findable via search."""
+    from dmc.retriever import search
+    from dmc.schemas import SearchRequest
+
+    session_id = seed_mixed_session(store)
+    result = distill_session(session_id, store)
+
+    # Proposals must use dmc:// URIs (indexed in FTS)
+    assert result.proposal_uris
+    assert all(uri.startswith("dmc://proposal/") for uri in result.proposal_uris)
+
+    # Each proposal must be readable via read_object
+    for uri in result.proposal_uris:
+        data = store.read_object(uri)
+        assert data.get("status") == "pending"
+
+    # search(scopes=["proposals"]) must find at least one distilled proposal
+    req = SearchRequest(query="wrong turn", scopes=["proposals"])
+    hits = search(req, store)
+    assert hits, "distilled proposals must be findable via search(scopes=['proposals'])"
+    hit_uris = {h.uri for h in hits}
+    assert hit_uris & set(result.proposal_uris), (
+        "at least one proposal URI from distill_session must appear in search results"
+    )
+
+    # No files written under .dmc/skills
+    skill_files = [p for p in (store.dmc_dir / "skills").rglob("*") if p.is_file()]
+    assert skill_files == []
+
+
+# ---------------------------------------------------------------------------
+# Blocker 1: end-to-end record → distill → precheck loop (Issue #1)
+# ---------------------------------------------------------------------------
+
+
+def test_record_distill_precheck_loop_fires_failure_mode_rule(
+    store: DMCStore,
+) -> None:
+    """Core loop: record a regression, distill, then precheck a similar action.
+
+    After distill_session writes failure_mode objects under objects/failure_mode/,
+    precheck must load them and fire RULE_FAILURE_MODE (failure-mode-resemblance)
+    when the proposed action matches the stored failure mode's trigger.
+    """
+    from dmc.precheck import RULE_FAILURE_MODE, precheck
+    from dmc.schemas import PrecheckRequest
+
+    session_id = "sess-loop-test"
+
+    # 1. Record a failure event with a distinctive trigger phrase
+    record_event(
+        make_event(
+            "loop-e1",
+            session_id,
+            phase="benchmark",
+            kind="benchmark_run",
+            outcome="regressed: tiling_factor too large",
+            intent="benchmark loop with large tile",
+        ),
+        store,
+    )
+
+    # 2. Distill the session — writes objects/failure_mode/<id>.yaml
+    result = distill_session(session_id, store)
+    assert result.failure_modes, "session with a regression must produce failure modes"
+    failure_mode_dir = store.objects_dir / "failure_mode"
+    assert failure_mode_dir.exists(), "distiller must write to objects/failure_mode/"
+
+    # 3. Run precheck on an action that resembles the stored failure mode
+    trigger_text = result.failure_modes[0].trigger
+    req = PrecheckRequest(
+        action=f"benchmark_run with {trigger_text}",
+        intent=f"repeat benchmark: {trigger_text}",
+    )
+    check = precheck(req, store)
+
+    assert RULE_FAILURE_MODE in check.matched_rules, (
+        "precheck must fire failure-mode-resemblance after distill wrote "
+        "the failure mode to objects/failure_mode/"
+    )
