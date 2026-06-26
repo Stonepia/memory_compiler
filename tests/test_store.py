@@ -203,6 +203,28 @@ def test_get_project_state_missing_raises(store: DMCStore) -> None:
         store.get_project_state()
 
 
+def test_get_project_state_seeded_repo_root_is_valid() -> None:
+    """The seeded .dmc/state/project_state.yaml must be ProjectState-valid.
+
+    DMCStore.get_project_state() validates the file with ProjectState.model_validate().
+    M09 exposes dmc://project_state/current and M11 uses 'dmc state show', so
+    the seeded file must carry the required 'name' and 'status' fields.
+    """
+    import pathlib
+
+    # Locate the repo root relative to this test file (tests/ -> repo root).
+    repo_root = pathlib.Path(__file__).parent.parent
+    seeded_state_path = repo_root / ".dmc" / "state" / "project_state.yaml"
+    assert seeded_state_path.exists(), f"Seeded project_state.yaml not found at {seeded_state_path}"
+
+    repo_store = DMCStore(repo_root)
+    # Must not raise DMCStorageError / ValidationError.
+    state = repo_store.get_project_state()
+    assert isinstance(state, ProjectState)
+    assert state.name, "ProjectState.name must be non-empty"
+    assert state.status, "ProjectState.status must be non-empty"
+
+
 def test_read_object_project_state_uri(store: DMCStore) -> None:
     store.upsert_project_state(make_state(name="beta"))
     out = store.read_object("dmc://project_state/current")
@@ -314,3 +336,52 @@ def test_rebuild_index_from_files(store: DMCStore) -> None:
     # And the file-backed objects still read back correctly.
     assert rebuilt.get_project_state().name == "occupancy-proj"
     assert rebuilt.read_object("dmc://knowledge/k1")["title"] == "occupancy low"
+
+
+def test_rebuild_index_includes_pending_proposals(tmp_path: Path) -> None:
+    """Pending proposals must survive a full index-delete + rebuild cycle."""
+    from dmc.distiller import distill_session
+    from dmc.recorder import record_event
+    from dmc.retriever import search
+    from dmc.schemas import SearchRequest, TraceAction, TraceEvent, TraceObservation
+
+    store = DMCStore(tmp_path)
+    store.initialize()
+
+    session_id = "rebuild-prop-sess"
+    record_event(
+        TraceEvent(
+            event_id="rp1",
+            session_id=session_id,
+            phase="benchmark",
+            actor="agent",
+            intent="benchmark kernel",
+            action=TraceAction(kind="benchmark_run"),
+            observation=TraceObservation(outcome="regressed: tile too large"),
+            timestamp="2026-06-25T00:00:00Z",
+            provenance=[{"source": f"session://{session_id}"}],
+        ),
+        store,
+    )
+    result = distill_session(session_id, store)
+    assert result.proposal_uris, "distill_session must produce at least one proposal"
+
+    # Destroy SQLite — plain files remain source of truth.
+    store.close()
+    store.db_path.unlink()
+    assert not store.db_path.exists()
+
+    rebuilt = DMCStore(tmp_path)
+    rebuilt.initialize()
+    rebuilt.rebuild_index()
+
+    # Pending proposals must be searchable after a cold rebuild.
+    hits = search(SearchRequest(query="tile", scopes=["proposals"]), rebuilt)
+    uris = {r.uri for r in hits}
+    proposal_id = result.proposal_uris[0].split("dmc://proposal/", 1)[-1]
+    assert f"dmc://proposal/{proposal_id}" in uris, (
+        f"Expected dmc://proposal/{proposal_id} in rebuilt index, got {uris}"
+    )
+    # URI must be DMC-readable (read_object resolves to the pending file).
+    data = rebuilt.read_object(f"dmc://proposal/{proposal_id}")
+    assert data.get("status") == "pending"

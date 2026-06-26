@@ -1,11 +1,16 @@
 # DMC dynamic project state (seeded by M00_BOOTSTRAP).
 # This file holds dynamic facts about the project. Stable instruction files
 # (AGENTS.md, skills, instructions) must NOT contain dynamic state.
+#
+# Required fields for DMCStore.get_project_state() / ProjectState model:
+#   name, status  (all other fields are extra and are allowed).
 schema_version: "0.1.0"
-project_status: initialized
+name: dev-memory-compiler
+status: initialized
 current_phase: V0
 last_completed_module: M08_DISTILLER_EVALS
 current_gate: M09_MCP_SERVER
+summary: "M01-M08 local core implemented; M09 ready to implement."
 updated_at: "2026-06-25T09:00:00Z"
 notes:
   - "M01-M08 local core implemented; M08_CORE_READY review fixes applied (Issue #1)."

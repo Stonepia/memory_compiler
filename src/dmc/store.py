@@ -727,6 +727,28 @@ class DMCStore:
                 )
                 count += 1
 
+        # Pending proposals (.dmc/proposals/pending/*.yaml).
+        # Plain files are the source of truth; this scan ensures the FTS index
+        # is fully rebuildable after deleting index.sqlite3.
+        pending_dir = self.dmc_dir / "proposals" / "pending"
+        if pending_dir.exists():
+            for path in sorted(pending_dir.glob("*")):
+                if not path.is_file():
+                    continue
+                if path.suffix.lower().lstrip(".") not in _SUPPORTED_EXTS:
+                    continue
+                data = self._deserialize(path)
+                self._index_row(
+                    conn,
+                    uri=f"dmc://{_KIND_PROPOSAL}/{path.stem}",
+                    kind=_KIND_PROPOSAL,
+                    scope=_KIND_PROPOSAL,
+                    title=str(data.get("rationale") or data.get("diff_summary") or path.stem),
+                    body=self._searchable_body(data),
+                    commit=False,
+                )
+                count += 1
+
         # Project state.
         if self.project_state_path.exists():
             data = self._read_project_state_dict()

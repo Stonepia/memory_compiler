@@ -7,7 +7,7 @@
     "goal": "Build a local-first Dev Memory Compiler sidecar for coding agents.",
     "project_status": "initialized"
   },
-  "current_phase": "P0",
+  "current_phase": "V0",
   "current_gate": "M09_MCP_SERVER",
   "global_rules": {
     "fresh_agent_default": true,
