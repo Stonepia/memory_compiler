@@ -272,7 +272,7 @@
       ]
     },
     "M09_MCP_SERVER": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M09_MCP_SERVER.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -285,10 +285,26 @@
         "M08_DISTILLER_EVALS"
       ],
       "blockers": [],
-      "attempts": []
+      "active_agent": "module-impl-agent-M09",
+      "attempt_id": "attempt_20260629053105",
+      "started_at": "2026-06-29T05:31:17Z",
+      "completed_at": "2026-06-29T05:40:00Z",
+      "acceptance_report": "reports/acceptance/M09_MCP_SERVER_attempt_20260629053105.md",
+      "handoff_report": "reports/handoffs/M09_MCP_SERVER_attempt_20260629053105.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260629053105",
+          "agent": "module-impl-agent-M09",
+          "started_at": "2026-06-29T05:31:17Z",
+          "completed_at": "2026-06-29T05:40:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M09_MCP_SERVER_attempt_20260629053105.md",
+          "handoff_report": "reports/handoffs/M09_MCP_SERVER_attempt_20260629053105.md"
+        }
+      ]
     },
     "M10_ADAPTERS": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M10_ADAPTERS.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -296,11 +312,7 @@
         "M04_RENDERER",
         "M09_MCP_SERVER"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M09"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "M11_CLI": {
@@ -391,5 +403,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-25T09:00:00Z"
+  "updated_at": "2026-06-29T05:40:00Z"
 }
