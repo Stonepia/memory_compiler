@@ -134,6 +134,11 @@ def _get_store(root: str | Path | None = None) -> DMCStore:
     return store
 
 
+def _clean(values: dict[str, Any]) -> dict[str, Any]:
+    """Drop ``None`` entries so unset optional tool args fall back to defaults."""
+    return {k: v for k, v in values.items() if v is not None}
+
+
 # ---------------------------------------------------------------------------
 # Tools (thin wrappers; all logic stays in core modules)
 # ---------------------------------------------------------------------------
@@ -254,12 +259,24 @@ def dmc_export_agent_bundle(
 ) -> dict[str, Any]:
     """Thin lazy wrapper over M10's adapter bundle export.
 
-    Adapter generation is owned by M10_ADAPTERS. While that module is absent,
-    return a clean ``ok=False`` envelope rather than failing.
+    Adapter generation is owned by M10_ADAPTERS. While that module is genuinely
+    absent (``dmc.adapters`` missing, or no ``export_agent_bundle`` symbol) we
+    return a clean ``ok=False`` envelope. A *real* ImportError raised from
+    inside ``dmc.adapters`` (a broken dependency once M10 exists) is reported
+    distinctly rather than masked as "not yet implemented".
     """
     try:
-        from dmc.adapters import export_agent_bundle
-    except ImportError:
+        import dmc.adapters as adapters_mod
+    except ModuleNotFoundError as exc:
+        if exc.name in ("dmc.adapters", "adapters"):
+            return envelope(False, None, ["M10_ADAPTERS not yet implemented"])
+        # A dependency *inside* adapters is missing — surface it distinctly.
+        return envelope(False, None, [f"dmc.adapters import error: {exc}"])
+    except ImportError as exc:  # pragma: no cover - needs broken M10
+        return envelope(False, None, [f"dmc.adapters import error: {exc}"])
+
+    export_agent_bundle = getattr(adapters_mod, "export_agent_bundle", None)
+    if export_agent_bundle is None:
         return envelope(False, None, ["M10_ADAPTERS not yet implemented"])
     try:
         result = export_agent_bundle(
@@ -310,16 +327,14 @@ def resource_artifact(artifact_id: str, store: DMCStore) -> dict[str, Any]:
 
 
 def resource_proposal_pending(store: DMCStore) -> dict[str, Any]:
-    """Resolve ``dmc://proposal/pending`` — list all pending proposals."""
-    pending_dir = store.dmc_dir / "proposals" / "pending"
-    items: list[dict[str, Any]] = []
-    if pending_dir.exists():
-        for path in sorted(pending_dir.glob("*.yaml")):
-            try:
-                items.append(store.read_object(f"dmc://proposal/{path.stem}"))
-            except DMCError:
-                continue
-    return envelope(True, items)
+    """Resolve ``dmc://proposal/pending`` — list all pending proposals.
+
+    Delegates enumeration to :meth:`DMCStore.list_pending_proposals`. Any
+    read/parse errors are surfaced in the envelope ``errors`` field (never
+    silently dropped); ``ok`` is ``False`` when corrupt entries were found.
+    """
+    items, errors = store.list_pending_proposals()
+    return envelope(not errors, items, errors)
 
 
 def _read_object_envelope(uri: str, store: DMCStore) -> dict[str, Any]:
@@ -383,45 +398,115 @@ def build_server(root: str | Path | None = None):
     store = _get_store(root)
     server = FastMCP("dmc")
 
+    # Tools register with explicit top-level fields mirroring the DMC Pydantic
+    # schemas so FastMCP generates input schemas whose required fields are the
+    # schema's own top-level fields (no nested `{"task": {...}}` wrapper).
+
     @server.tool(name="dmc_plan_task")
-    def _plan_task(task: dict) -> dict:
-        return dmc_plan_task(task, store)
+    def _plan_task(
+        id: str,
+        task: str,
+        repo: str | None = None,
+        mode: str | None = None,
+        hardware: list[str] | None = None,
+        changed_files: list[str] | None = None,
+        current_phase: str | None = None,
+        budget_tokens: int | None = None,
+        constraints: list[str] | None = None,
+    ) -> dict:
+        return dmc_plan_task(_clean(locals()), store)
 
     @server.tool(name="dmc_render_graph")
-    def _render_graph(payload: dict) -> dict:
-        return dmc_render_graph(payload, store)
+    def _render_graph(graph: dict, format: str = "mermaid") -> dict:
+        return dmc_render_graph({"graph": graph, "format": format}, store)
 
     @server.tool(name="dmc_get_briefing")
-    def _get_briefing(task: dict) -> dict:
-        return dmc_get_briefing(task, store)
+    def _get_briefing(
+        id: str,
+        task: str,
+        repo: str | None = None,
+        mode: str | None = None,
+        hardware: list[str] | None = None,
+        changed_files: list[str] | None = None,
+        current_phase: str | None = None,
+        budget_tokens: int | None = None,
+        constraints: list[str] | None = None,
+    ) -> dict:
+        return dmc_get_briefing(_clean(locals()), store)
 
     @server.tool(name="dmc_search")
-    def _search(request: dict) -> dict:
-        return dmc_search(request, store)
+    def _search(
+        query: str,
+        scopes: list[str] | None = None,
+        filters: dict | None = None,
+        limit: int = 10,
+        budget_tokens: int | None = None,
+    ) -> dict:
+        return dmc_search(_clean(locals()), store)
 
     @server.tool(name="dmc_precheck")
-    def _precheck(action: dict) -> dict:
-        return dmc_precheck(action, store)
+    def _precheck(
+        action: str,
+        files: list[str] | None = None,
+        command: str | None = None,
+        intent: str | None = None,
+        risk_level: str | None = None,
+        task_context: dict | None = None,
+    ) -> dict:
+        return dmc_precheck(_clean(locals()), store)
 
     @server.tool(name="dmc_record_event")
-    def _record_event(event: dict) -> dict:
-        return dmc_record_event(event, store)
+    def _record_event(
+        event_id: str,
+        session_id: str,
+        phase: str,
+        actor: str,
+        intent: str,
+        action: dict,
+        observation: dict,
+        timestamp: str,
+        provenance: list[dict],
+        run_id: str | None = None,
+        step_id: int | None = None,
+        repo_state: dict | None = None,
+        artifacts: dict | None = None,
+        reasoning_summary: dict | None = None,
+        memory_hooks: dict | None = None,
+    ) -> dict:
+        return dmc_record_event(_clean(locals()), store)
 
     @server.tool(name="dmc_commit_state")
-    def _commit_state(state: dict) -> dict:
-        return dmc_commit_state(state, store)
+    def _commit_state(
+        name: str,
+        status: str,
+        current_phase: str | None = None,
+        summary: str | None = None,
+        active_task: str | None = None,
+        open_questions: list[str] | None = None,
+        updated_at: str | None = None,
+    ) -> dict:
+        return dmc_commit_state(_clean(locals()), store)
 
     @server.tool(name="dmc_distill_session")
-    def _distill_session(payload: dict) -> dict:
-        return dmc_distill_session(payload, store)
+    def _distill_session(session_id: str) -> dict:
+        return dmc_distill_session({"session_id": session_id}, store)
 
     @server.tool(name="dmc_propose_skill_update")
-    def _propose_skill_update(proposal: dict) -> dict:
-        return dmc_propose_skill_update(proposal, store)
+    def _propose_skill_update(
+        id: str,
+        target: str,
+        change_kind: str,
+        rationale: str,
+        provenance: list[dict],
+        diff_summary: str | None = None,
+        status: str = "pending",
+        evidence: list[dict] | None = None,
+    ) -> dict:
+        return dmc_propose_skill_update(_clean(locals()), store)
 
     @server.tool(name="dmc_export_agent_bundle")
-    def _export_agent_bundle(payload: dict) -> dict:
-        return dmc_export_agent_bundle(payload, store)
+    def _export_agent_bundle(target: str, out: str | None = None) -> dict:
+        return dmc_export_agent_bundle({"target": target, "out": out}, store)
 
     @server.resource("dmc://project_state/current")
     def _project_state() -> dict:

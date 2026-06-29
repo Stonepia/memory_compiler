@@ -191,6 +191,25 @@ def test_resource_artifact_missing_graceful(store):
     assert r["ok"] is False and r["errors"]
 
 
+def test_resource_proposal_pending_surfaces_corrupt(store):
+    m.dmc_propose_skill_update(
+        {
+            "id": "good1",
+            "target": "skill://tier1/x",
+            "change_kind": "create",
+            "rationale": "r",
+            "provenance": [{"source": "session://s"}],
+        },
+        store,
+    )
+    corrupt = store.dmc_dir / "proposals" / "pending" / "bad.yaml"
+    corrupt.write_text("::: not: valid: yaml: [", encoding="utf-8")
+    r = m.resource_proposal_pending(store)
+    assert r["ok"] is False
+    assert r["errors"] and any("bad.yaml" in e for e in r["errors"])
+    assert any(item["id"] == "good1" for item in r["data"])
+
+
 def test_resource_artifact_present(store):
     card = ArtifactCard(
         id="art1", uri="dmc://artifact/art1", kind="bench", summary="s",
@@ -229,3 +248,63 @@ def test_server_registration(tmp_path):
     resources = asyncio.run(server.list_resources())
     templates = asyncio.run(server.list_resource_templates())
     assert resources or templates
+
+
+# ---------------------------------------------------------------------------
+# MCP-level: generated input schemas expose top-level fields (no nested wrapper)
+# ---------------------------------------------------------------------------
+
+
+def test_tool_input_schemas_are_flat_not_wrapped(tmp_path):
+    import asyncio
+
+    server = m.build_server(tmp_path)
+    tools = {t.name: t for t in asyncio.run(server.list_tools())}
+
+    plan = tools["dmc_plan_task"].inputSchema
+    assert "id" in plan["properties"] and "task" in plan["properties"]
+    assert set(plan["required"]) == {"id", "task"}
+    assert "task" not in plan["properties"].get("task", {}).get("properties", {})
+
+    srch = tools["dmc_search"].inputSchema
+    assert "query" in srch["properties"]
+    assert srch["required"] == ["query"]
+    assert "request" not in srch["properties"]
+
+    ev = tools["dmc_record_event"].inputSchema
+    for field in ("event_id", "session_id", "phase", "actor", "intent",
+                  "action", "observation", "timestamp", "provenance"):
+        assert field in ev["properties"], field
+    assert "event" not in ev["properties"]
+
+
+def test_read_resource_all_six(tmp_path):
+    import asyncio
+
+    store = DMCStore(tmp_path)
+    store.initialize()
+    store.upsert_project_state(ProjectState(name="proj", status="active"))
+    store.save_artifact_card(
+        ArtifactCard(id="art1", uri="dmc://artifact/art1", kind="bench",
+                     summary="s", provenance=[{"source": "session://s"}])
+    )
+    server = m.build_server(tmp_path)
+    for uri in (
+        "dmc://project_state/current",
+        "dmc://briefing/latest",
+        "dmc://skill/tier1/x",
+        "dmc://skill/tier2/y",
+        "dmc://artifact/art1",
+        "dmc://proposal/pending",
+    ):
+        contents = asyncio.run(server.read_resource(uri))
+        assert contents is not None
+
+
+def test_all_four_prompts_registered(tmp_path):
+    import asyncio
+
+    server = m.build_server(tmp_path)
+    names = {p.name for p in asyncio.run(server.list_prompts())}
+    assert set(m.PROMPT_NAMES) == names & set(m.PROMPT_NAMES)
+    assert len(set(m.PROMPT_NAMES)) == 4

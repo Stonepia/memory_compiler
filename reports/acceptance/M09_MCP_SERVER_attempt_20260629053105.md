@@ -15,8 +15,11 @@ programmatic `build_server(root)` and stdio `main()` entry, wired to a new
 
 - `src/dmc/mcp_server.py` (new)
 - `tests/test_mcp_server.py` (new)
+- `tests/test_store.py` (added pending-proposal enumeration tests)
+- `src/dmc/store.py` (added `list_pending_proposals`)
 - `src/dmc/cli.py` (added `serve`)
-- `pyproject.toml`, `uv.lock` (added `mcp`)
+- `pyproject.toml`, `uv.lock` (added `mcp`, bounded `>=1.28.1,<2`)
+- `.gitignore` (ignore `*.sqlite3` / `.dmc/index.sqlite3`; untracked the cache)
 - `agent_state.json`
 
 ## Public APIs implemented
@@ -24,25 +27,33 @@ programmatic `build_server(root)` and stdio `main()` entry, wired to a new
 - Tools: `dmc_plan_task`, `dmc_render_graph`, `dmc_get_briefing`, `dmc_search`,
   `dmc_precheck`, `dmc_record_event`, `dmc_commit_state`, `dmc_distill_session`,
   `dmc_propose_skill_update`, `dmc_export_agent_bundle` (lazy M10 wrapper).
+  Tools register with explicit top-level fields mirroring the DMC Pydantic
+  schemas so FastMCP input schemas are flat (no nested `{"task":{...}}` wrapper).
 - Resources: `dmc://project_state/current`, `dmc://briefing/latest`,
   `dmc://skill/tier1/{id}`, `dmc://skill/tier2/{id}`, `dmc://artifact/{id}`,
   `dmc://proposal/pending`.
 - Prompts: `dmc:start-task`, `dmc:checkpoint`, `dmc:end-session-distill`,
   `dmc:review-skill-proposals`.
 - `build_server(root)`, `main(root)`, `resolve_root`, `envelope`.
+- Core: `DMCStore.list_pending_proposals() -> (entries, errors)`.
 
 ## Tests added or changed
 
-`tests/test_mcp_server.py` — 20 tests: each tool envelope/happy path, lazy
+`tests/test_mcp_server.py` — 27 tests: each tool envelope/happy path, lazy
 export fallback, invalid-input -> ok=False, resources resolve + missing-id
-graceful, prompt text, server tool/resource/prompt registration. No network.
+graceful, prompt text, server registration; plus MCP-level
+`test_tool_input_schemas_are_flat_not_wrapped`, `test_read_resource_all_six`,
+`test_all_four_prompts_registered`, `test_resource_proposal_pending_surfaces_corrupt`.
+`tests/test_store.py` — `test_list_pending_proposals_empty`,
+`_returns_entries`, `_surfaces_corrupt`. No network.
 
 ## Commands run
 
 | Command | Result | Notes |
 |---|---|---|
-| `uv run pytest tests/test_mcp_server.py` | pass | 20 passed |
-| `uv run pytest` | pass | 232 passed |
+| `uv run dmc serve --help` | pass | exit 0 |
+| `uv run pytest tests/test_mcp_server.py` | pass | 27 passed |
+| `uv run pytest` | pass | 239 passed |
 | `uv run ruff check .` | pass | All checks passed |
 | `uv run dmc --help` | pass | exit 0 |
 | `uv sync` | pass | 45 packages resolved |
@@ -60,14 +71,16 @@ graceful, prompt text, server tool/resource/prompt registration. No network.
 
 ## Known limitations
 
-- `dmc_export_agent_bundle` returns ok=False until M10 lands.
+- `dmc_export_agent_bundle` returns ok=False until M10 lands; a genuine broken
+  import from inside `dmc.adapters` is reported distinctly (not masked).
 - `dmc://briefing/latest` reads `.dmc/briefing.md` if present (none until CLI).
 
 ## Dependency changes
 
-Added `mcp==1.28.1` (MCP Python SDK incl. FastMCP) via `uv add mcp`. `mcp`
-chosen over `fastmcp`; installed cleanly. Transitive `jsonschema` pulled in by
-`mcp` but NOT added to `pyproject.toml`.
+Added `mcp>=1.28.1,<2` (MCP Python SDK incl. FastMCP) via `uv add mcp`, then
+bounded the upper range and re-ran `uv lock`/`uv sync` (uv.lock pins 1.28.1).
+`mcp` chosen over `fastmcp`; installed cleanly. Transitive `jsonschema` pulled
+in by `mcp` but NOT added to `pyproject.toml`.
 
 ## No-forbidden-work checklist
 

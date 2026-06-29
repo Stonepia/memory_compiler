@@ -385,3 +385,46 @@ def test_rebuild_index_includes_pending_proposals(tmp_path: Path) -> None:
     # URI must be DMC-readable (read_object resolves to the pending file).
     data = rebuilt.read_object(f"dmc://proposal/{proposal_id}")
     assert data.get("status") == "pending"
+
+
+def test_list_pending_proposals_empty(tmp_path: Path) -> None:
+    """No pending dir -> empty entries, no errors."""
+    store = DMCStore(tmp_path)
+    store.initialize()
+    entries, errors = store.list_pending_proposals()
+    assert entries == [] and errors == []
+
+
+def test_list_pending_proposals_returns_entries(tmp_path: Path) -> None:
+    from dmc.schemas import SkillUpdateProposal
+
+    store = DMCStore(tmp_path)
+    store.initialize()
+    store.save_pending_proposal(
+        SkillUpdateProposal(
+            id="p1", target="skill://tier1/x", change_kind="create",
+            rationale="r", provenance=[{"source": "session://s"}],
+        )
+    )
+    entries, errors = store.list_pending_proposals()
+    assert errors == []
+    assert [e["id"] for e in entries] == ["p1"]
+
+
+def test_list_pending_proposals_surfaces_corrupt(tmp_path: Path) -> None:
+    """Corrupt files are reported in errors, never silently dropped."""
+    from dmc.schemas import SkillUpdateProposal
+
+    store = DMCStore(tmp_path)
+    store.initialize()
+    store.save_pending_proposal(
+        SkillUpdateProposal(
+            id="good", target="skill://tier1/x", change_kind="create",
+            rationale="r", provenance=[{"source": "session://s"}],
+        )
+    )
+    bad = store.dmc_dir / "proposals" / "pending" / "bad.yaml"
+    bad.write_text("::: not: valid: [", encoding="utf-8")
+    entries, errors = store.list_pending_proposals()
+    assert [e["id"] for e in entries] == ["good"]
+    assert errors and any("bad.yaml" in e for e in errors)
