@@ -18,7 +18,7 @@ programmatic `build_server(root)` and stdio `main()` entry, wired to a new
 - `tests/test_store.py` (added pending-proposal enumeration tests)
 - `src/dmc/store.py` (added `list_pending_proposals`)
 - `src/dmc/cli.py` (added `serve`)
-- `pyproject.toml`, `uv.lock` (added `mcp`, bounded `>=1.28.1,<2`)
+- `pyproject.toml`, `uv.lock` (added `mcp>=1.28.1`)
 - `.gitignore` (ignore `*.sqlite3` / `.dmc/index.sqlite3`; untracked the cache)
 - `agent_state.json`
 
@@ -77,10 +77,10 @@ graceful, prompt text, server registration; plus MCP-level
 
 ## Dependency changes
 
-Added `mcp>=1.28.1,<2` (MCP Python SDK incl. FastMCP) via `uv add mcp`, then
-bounded the upper range and re-ran `uv lock`/`uv sync` (uv.lock pins 1.28.1).
-`mcp` chosen over `fastmcp`; installed cleanly. Transitive `jsonschema` pulled
-in by `mcp` but NOT added to `pyproject.toml`.
+Added `mcp>=1.28.1` (MCP Python SDK incl. FastMCP) via `uv add mcp`; `uv lock`
+resolves the latest available (1.28.1). `mcp` chosen over `fastmcp`; installed
+cleanly. Transitive `jsonschema` pulled in by `mcp` but NOT added to
+`pyproject.toml`.
 
 ## No-forbidden-work checklist
 
