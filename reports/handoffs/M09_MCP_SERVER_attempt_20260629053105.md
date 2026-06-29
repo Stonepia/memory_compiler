@@ -15,19 +15,22 @@ each handler is a small wrapper that validates JSON input against M01 Pydantic
 schemas and returns a `{ok, data, errors}` envelope. The 10 required tools, 6
 resources, and 4 prompts are implemented. `dmc_export_agent_bundle` is a lazy
 wrapper returning `M10_ADAPTERS not yet implemented` while M10 is absent. Added
-`tests/test_mcp_server.py` (20 tests, no network). Added `dmc serve` CLI command.
-Acceptance: `uv run pytest` 232 passed, ruff clean, `dmc --help` exit 0,
-`uv sync` ok. New dependency `mcp==1.28.1` added via `uv add`.
+Added `tests/test_mcp_server.py` (27 tests, no network). Added `dmc serve` CLI command.
+Acceptance: `uv run pytest` 239 passed, ruff clean, `dmc --help` exit 0,
+`uv sync` ok. New dependency `mcp>=1.28.1` (unbounded; uv.lock pins 1.28.1).
 
 ## What changed
 
 Created:
 - `src/dmc/mcp_server.py` — tools, resources, prompts, `build_server`, `main`.
-- `tests/test_mcp_server.py` — 20 unit tests against temp root + real store.
+- `tests/test_mcp_server.py` — 27 unit tests against temp root + real store
+  (incl. MCP-level schema flatness, all-six-resources, corrupt-proposal tests).
 
 Modified:
 - `src/dmc/cli.py` — added `serve` command (does not break `dmc --help`).
-- `pyproject.toml` / `uv.lock` — added `mcp>=1.28.1`.
+- `src/dmc/store.py` — added `list_pending_proposals() -> (entries, errors)`.
+- `tests/test_store.py` — added 3 pending-proposal enumeration tests.
+- `pyproject.toml` / `uv.lock` — added `mcp>=1.28.1` (unbounded, uv.lock pins 1.28.1).
 - `agent_state.json` — M09 ready -> in_progress -> done; M10 unblocked.
 
 ## Important implementation notes
