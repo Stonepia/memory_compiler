@@ -118,6 +118,16 @@ def schemas_export(
     typer.echo(f"Wrote {len(written)} schema files to {out}")
 
 
+@app.command()
+def serve(
+    root: str = typer.Option(None, "--root", help="DMC project root (defaults to cwd)."),
+) -> None:
+    """Run the DMC MCP server over stdio (owned by M09_MCP_SERVER)."""
+    from dmc.mcp_server import main as serve_main
+
+    serve_main(root)
+
+
 @app.command(name="export-agent-bundle")
 def export_agent_bundle(
     target: str = typer.Option(..., "--target", help="Adapter target, e.g. codex."),

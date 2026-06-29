@@ -9,3 +9,7 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# DMC: SQLite/FTS5 index is a rebuildable cache; files are source of truth
+.dmc/index.sqlite3
+*.sqlite3

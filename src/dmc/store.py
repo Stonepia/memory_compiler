@@ -605,6 +605,27 @@ class DMCStore:
         )
         return uri
 
+    def list_pending_proposals(self) -> tuple[list[dict], list[str]]:
+        """Enumerate pending proposals; never silently drop corrupt entries.
+
+        Scans ``.dmc/proposals/pending/*.yaml`` (the source of truth) in sorted
+        order and returns ``(entries, errors)``: ``entries`` is the list of
+        parsed proposal dicts, ``errors`` is a list of human-readable messages
+        for any file that could not be read/parsed. A missing pending directory
+        yields ``([], [])``. Read errors are surfaced, never swallowed.
+        """
+        pending_dir = self.dmc_dir / "proposals" / "pending"
+        entries: list[dict] = []
+        errors: list[str] = []
+        if not pending_dir.exists():
+            return entries, errors
+        for path in sorted(pending_dir.glob("*.yaml")):
+            try:
+                entries.append(self.read_object(f"dmc://{_KIND_PROPOSAL}/{path.stem}"))
+            except DMCError as exc:
+                errors.append(f"{path.name}: {exc}")
+        return entries, errors
+
     # ------------------------------------------------------------------
     # Search
     # ------------------------------------------------------------------
