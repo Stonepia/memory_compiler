@@ -8,6 +8,8 @@ a clean checkout while preventing fake/no-op behavior.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 
@@ -132,9 +134,23 @@ def serve(
 def export_agent_bundle(
     target: str = typer.Option(..., "--target", help="Adapter target, e.g. codex."),
     out: str = typer.Option(None, "--out", help="Output directory."),
+    root: str = typer.Option(None, "--root", help="DMC project root (defaults to cwd)."),
 ) -> None:
     """Generate an adapter bundle for a target agent (owned by M10_ADAPTERS)."""
-    _not_implemented("export-agent-bundle", "M10_ADAPTERS")
+    from dmc.adapters import VALID_TARGETS
+    from dmc.adapters import export_agent_bundle as _export_agent_bundle
+
+    if target not in VALID_TARGETS:
+        _console.print(
+            f"[bold red]ValueError[/bold red]: unknown adapter target {target!r}; "
+            f"expected one of {VALID_TARGETS}"
+        )
+        raise typer.Exit(code=1)
+
+    project_root = Path(root).resolve() if root is not None else Path.cwd()
+    written = _export_agent_bundle(target, out=out, project_root=project_root)
+    for path in written:
+        typer.echo(str(path))
 
 
 def main() -> None:

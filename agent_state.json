@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "V0",
-  "current_gate": "M09_MCP_SERVER",
+  "current_gate": "M11_CLI",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -304,7 +304,7 @@
       ]
     },
     "M10_ADAPTERS": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M10_ADAPTERS.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -313,10 +313,26 @@
         "M09_MCP_SERVER"
       ],
       "blockers": [],
-      "attempts": []
+      "active_agent": "module-impl-agent-M10",
+      "attempt_id": "attempt_20260701061500",
+      "started_at": "2026-07-01T06:15:00Z",
+      "completed_at": "2026-07-01T06:20:00Z",
+      "acceptance_report": "reports/acceptance/M10_ADAPTERS_attempt_20260701061500.md",
+      "handoff_report": "reports/handoffs/M10_ADAPTERS_attempt_20260701061500.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260701061500",
+          "agent": "module-impl-agent-M10",
+          "started_at": "2026-07-01T06:15:00Z",
+          "completed_at": "2026-07-01T06:20:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M10_ADAPTERS_attempt_20260701061500.md",
+          "handoff_report": "reports/handoffs/M10_ADAPTERS_attempt_20260701061500.md"
+        }
+      ]
     },
     "M11_CLI": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/M11_CLI.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -329,11 +345,7 @@
         "M08_DISTILLER_EVALS",
         "M10_ADAPTERS"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for M10"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "G01_INTEGRATION_V0": {

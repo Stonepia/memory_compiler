@@ -284,9 +284,16 @@ def dmc_export_agent_bundle(
             out=payload.get("out"),
             store=store,
         )
-        data = result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+        if hasattr(result, "model_dump"):
+            data = result.model_dump(mode="json")
+        elif isinstance(result, list):
+            # export_agent_bundle returns list[Path]; stringify for a
+            # JSON-compatible envelope.
+            data = [str(p) for p in result]
+        else:
+            data = result
         return envelope(True, data)
-    except (DMCError, ValueError, TypeError) as exc:  # pragma: no cover - needs M10
+    except (DMCError, ValueError, TypeError) as exc:
         return envelope(False, None, [str(exc)])
 
 
