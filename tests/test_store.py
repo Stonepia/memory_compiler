@@ -7,7 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from dmc.schemas import ArtifactCard, ProjectState, SearchResult, TraceEvent
+from dmc.schemas import (
+    ArtifactCard,
+    KnowledgeRef,
+    ProjectState,
+    SearchResult,
+    Tier0Policy,
+    Tier1Workflow,
+    TraceEvent,
+)
 from dmc.store import (
     DMCNotFoundError,
     DMCStore,
@@ -57,6 +65,17 @@ def make_state(name: str = "dmc", status: str = "active") -> ProjectState:
         status=status,
         current_phase="V0",
         summary="building the local store",
+    )
+
+
+def make_knowledge(knowledge_id: str, summary: str, **extra: object) -> KnowledgeRef:
+    return KnowledgeRef(
+        id=knowledge_id,
+        kind="doc",
+        uri=f"file:///tmp/{knowledge_id.replace('/', '_')}.md",
+        summary=summary,
+        provenance=[{"source": f"session://{knowledge_id.replace('/', '_')}"}],
+        **extra,
     )
 
 
@@ -144,15 +163,15 @@ def test_append_event_rejects_non_event(store: DMCStore) -> None:
 
 def test_write_read_object_yaml_roundtrip(store: DMCStore) -> None:
     data = {"id": "k1", "title": "BMG occupancy notes", "value": 42}
-    uri = store.write_object("knowledge", "k1", data, ext="yaml")
-    assert uri == "dmc://knowledge/k1"
+    uri = store.write_object("notes", "k1", data, ext="yaml")
+    assert uri == "dmc://notes/k1"
     out = store.read_object(uri)
     assert out == data
 
 
 def test_write_read_object_json_roundtrip(store: DMCStore) -> None:
     data = {"id": "k2", "title": "json object", "nested": {"a": [1, 2, 3]}}
-    uri = store.write_object("knowledge", "k2", data, ext="json")
+    uri = store.write_object("notes", "k2", data, ext="json")
     out = store.read_object(uri)
     assert out == data
 
@@ -167,7 +186,17 @@ def test_write_object_accepts_basemodel(store: DMCStore) -> None:
 
 def test_write_object_rejects_bad_ext(store: DMCStore) -> None:
     with pytest.raises(DMCValidationError):
-        store.write_object("knowledge", "k3", {"a": 1}, ext="exe")
+        store.write_object("notes", "k3", {"a": 1}, ext="exe")
+
+
+def test_write_object_rejects_reserved_kind(store: DMCStore) -> None:
+    # "skill" and "knowledge" have dedicated canonical APIs; write_object must
+    # refuse them so .dmc/skills and .dmc/knowledge stay the single source of
+    # truth (no dual write paths).
+    with pytest.raises(DMCValidationError):
+        store.write_object("knowledge", "k3", {"a": 1}, ext="yaml")
+    with pytest.raises(DMCValidationError):
+        store.write_object("skill", "s1", {"a": 1}, ext="yaml")
 
 
 def test_read_object_invalid_uri_raises(store: DMCStore) -> None:
@@ -177,7 +206,148 @@ def test_read_object_invalid_uri_raises(store: DMCStore) -> None:
 
 def test_read_object_unknown_object_raises(store: DMCStore) -> None:
     with pytest.raises(DMCNotFoundError):
+        store.read_object("dmc://notes/does_not_exist")
+    with pytest.raises(DMCNotFoundError):
         store.read_object("dmc://knowledge/does_not_exist")
+
+
+# ---------------------------------------------------------------------------
+# path-traversal containment (write_object / read_object)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("bad_kind", ["../escape", "a/b", "..", "", "a\\b"])
+def test_write_object_rejects_path_traversal_kind(store: DMCStore, bad_kind: str) -> None:
+    with pytest.raises(DMCValidationError):
+        store.write_object(bad_kind, "obj1", {"a": 1}, ext="yaml")
+
+
+@pytest.mark.parametrize("bad_id", ["../escape", "a/b", "..", "", "a\\b"])
+def test_write_object_rejects_path_traversal_object_id(store: DMCStore, bad_id: str) -> None:
+    with pytest.raises(DMCValidationError):
+        store.write_object("notes", bad_id, {"a": 1}, ext="yaml")
+
+
+def test_write_object_traversal_cannot_escape_objects_dir(store: DMCStore) -> None:
+    # Even if a validation gap were reopened, _safe_child must still refuse to
+    # write outside objects_dir. Escape sentinel must never be created.
+    sentinel = store.dmc_dir / "escaped.yaml"
+    with pytest.raises(DMCValidationError):
+        store.write_object("notes", "..", {"a": 1}, ext="yaml")
+    assert not sentinel.exists()
+
+
+@pytest.mark.parametrize(
+    "bad_uri",
+    [
+        "dmc://notes/../escape",
+        "dmc://../escape/x",
+    ],
+)
+def test_read_object_rejects_path_traversal(store: DMCStore, bad_uri: str) -> None:
+    with pytest.raises((DMCValidationError, DMCNotFoundError)):
+        store.read_object(bad_uri)
+
+
+# ---------------------------------------------------------------------------
+# skills (canonical: .dmc/skills/tier{0,1,2}/<id>.yaml)
+# ---------------------------------------------------------------------------
+
+
+def test_write_read_skill_tier0_roundtrip(store: DMCStore) -> None:
+    policy = Tier0Policy(id="always-cite", title="Always cite evidence", policy="cite")
+    uri = store.write_skill(0, policy)
+    assert uri == "dmc://skill/tier0/always-cite"
+    assert (store.skills_dir / "tier0" / "always-cite.yaml").exists()
+    assert not (store.objects_dir / "skill").exists()
+
+    out = store.read_skill(0, "always-cite")
+    assert out["id"] == "always-cite"
+    assert out["tier"] == 0
+
+
+def test_skill_resource_reads_dmc_skills_tier0(store: DMCStore) -> None:
+    # dmc://skill/tier0/<id> must resolve through .dmc/skills, not .dmc/objects.
+    store.write_skill(0, Tier0Policy(id="p1", title="Policy one", policy="always cite"))
+    out = store.read_object("dmc://skill/tier0/p1")
+    assert out["id"] == "p1"
+    assert out["policy"] == "always cite"
+
+
+def test_skill_resource_reads_dmc_skills_tier1(store: DMCStore) -> None:
+    store.write_skill(
+        1, Tier1Workflow(id="w1", title="Workflow one", steps=["a", "b"])
+    )
+    out = store.read_object("dmc://skill/tier1/w1")
+    assert out["id"] == "w1"
+    assert out["steps"] == ["a", "b"]
+
+
+def test_list_skills_filters_by_tier(store: DMCStore) -> None:
+    store.write_skill(0, Tier0Policy(id="p1", title="Policy one", policy="cite"))
+    store.write_skill(1, Tier1Workflow(id="w1", title="Workflow one"))
+    store.write_skill(1, Tier1Workflow(id="w2", title="Workflow two"))
+
+    all_skills = store.list_skills()
+    assert {s["id"] for s in all_skills} == {"p1", "w1", "w2"}
+
+    tier1_only = store.list_skills(tier=1)
+    assert {s["id"] for s in tier1_only} == {"w1", "w2"}
+
+
+def test_write_skill_rejects_tier_mismatch(store: DMCStore) -> None:
+    with pytest.raises(DMCValidationError):
+        store.write_skill(1, Tier0Policy(id="p1", title="Policy one", policy="cite"))
+
+
+def test_read_skill_missing_raises(store: DMCStore) -> None:
+    with pytest.raises(DMCNotFoundError):
+        store.read_skill(1, "does_not_exist")
+
+
+# ---------------------------------------------------------------------------
+# knowledge (canonical: .dmc/knowledge/<id>.yaml, id may be nested)
+# ---------------------------------------------------------------------------
+
+
+def test_write_read_knowledge_roundtrip(store: DMCStore) -> None:
+    ref = make_knowledge("k1", "occupancy report")
+    uri = store.write_knowledge(ref)
+    assert uri == "dmc://knowledge/k1"
+    assert (store.knowledge_dir / "k1.yaml").exists()
+
+    out = store.read_knowledge("k1")
+    assert out["id"] == "k1"
+    assert out["summary"] == "occupancy report"
+
+
+def test_write_read_nested_knowledge_roundtrip(store: DMCStore) -> None:
+    ref = make_knowledge("hw/by-platform/bmg", "BMG platform notes")
+    uri = store.write_knowledge(ref)
+    assert uri == "dmc://knowledge/hw/by-platform/bmg"
+    assert (store.knowledge_dir / "hw" / "by-platform" / "bmg.yaml").exists()
+
+    out = store.read_knowledge("hw/by-platform/bmg")
+    assert out["summary"] == "BMG platform notes"
+    via_read_object = store.read_object(uri)
+    assert via_read_object["summary"] == "BMG platform notes"
+
+
+def test_knowledge_id_rejects_traversal_segment() -> None:
+    with pytest.raises(ValueError):
+        make_knowledge("hw/../etc", "bad")
+
+
+def test_read_knowledge_rejects_traversal_segment(store: DMCStore) -> None:
+    with pytest.raises(DMCValidationError):
+        store.read_knowledge("hw/../etc")
+
+
+def test_list_knowledge_includes_nested(store: DMCStore) -> None:
+    store.write_knowledge(make_knowledge("k1", "flat"))
+    store.write_knowledge(make_knowledge("hw/by-platform/bmg", "nested"))
+    ids = {item["id"] for item in store.list_knowledge()}
+    assert ids == {"k1", "hw/by-platform/bmg"}
 
 
 # ---------------------------------------------------------------------------
@@ -259,12 +429,8 @@ def test_save_artifact_card_writes_file_and_appends_index(store: DMCStore) -> No
 
 
 def test_search_text_returns_hits(store: DMCStore) -> None:
-    store.write_object(
-        "knowledge", "k1", {"title": "BMG occupancy low", "body": "warp stalls"}
-    )
-    store.write_object(
-        "knowledge", "k2", {"title": "unrelated", "body": "nothing here"}
-    )
+    store.write_knowledge(make_knowledge("k1", "BMG occupancy low: warp stalls"))
+    store.write_knowledge(make_knowledge("k2", "unrelated: nothing here"))
     results = store.search_text("occupancy", scopes=["knowledge"])
     assert results
     assert all(isinstance(r, SearchResult) for r in results)
@@ -272,7 +438,7 @@ def test_search_text_returns_hits(store: DMCStore) -> None:
 
 
 def test_search_text_respects_scopes(store: DMCStore) -> None:
-    store.write_object("knowledge", "k1", {"title": "occupancy report"})
+    store.write_knowledge(make_knowledge("k1", "occupancy report"))
     store.append_event(make_event("e1", "sess1", intent="occupancy probe"))
 
     # Restrict to memory scope: only the event should match.
@@ -288,9 +454,19 @@ def test_search_text_respects_scopes(store: DMCStore) -> None:
 
 def test_search_text_respects_limit(store: DMCStore) -> None:
     for i in range(5):
-        store.write_object("knowledge", f"k{i}", {"title": f"occupancy item {i}"})
+        store.write_knowledge(make_knowledge(f"k{i}", f"occupancy item {i}"))
     results = store.search_text("occupancy", scopes=["knowledge"], limit=2)
     assert len(results) == 2
+
+
+def test_knowledge_scope_reads_dmc_knowledge(store: DMCStore) -> None:
+    # .dmc/knowledge is the single source of truth for the "knowledge" scope —
+    # not .dmc/objects/knowledge.
+    store.write_knowledge(make_knowledge("k1", "occupancy report"))
+    assert (store.knowledge_dir / "k1.yaml").exists()
+    assert not (store.objects_dir / "knowledge").exists()
+    hits = store.search_text("occupancy", scopes=["knowledge"])
+    assert [r.uri for r in hits] == ["dmc://knowledge/k1"]
 
 
 def test_search_text_empty_query_raises(store: DMCStore) -> None:
@@ -309,7 +485,7 @@ def test_search_text_requires_scope(store: DMCStore) -> None:
 
 
 def test_rebuild_index_from_files(store: DMCStore) -> None:
-    store.write_object("knowledge", "k1", {"title": "occupancy low"})
+    store.write_knowledge(make_knowledge("k1", "occupancy low"))
     store.append_event(make_event("e1", "sess1", intent="occupancy probe"))
     store.save_artifact_card(make_artifact("a1", "occupancy artifact"))
     store.upsert_project_state(make_state(name="occupancy-proj"))
@@ -335,7 +511,35 @@ def test_rebuild_index_from_files(store: DMCStore) -> None:
 
     # And the file-backed objects still read back correctly.
     assert rebuilt.get_project_state().name == "occupancy-proj"
-    assert rebuilt.read_object("dmc://knowledge/k1")["title"] == "occupancy low"
+    assert rebuilt.read_object("dmc://knowledge/k1")["summary"] == "occupancy low"
+
+
+def test_rebuild_index_includes_skills_and_nested_knowledge(store: DMCStore) -> None:
+    store.write_skill(
+        0, Tier0Policy(id="always-cite", title="Always cite evidence", policy="cite")
+    )
+    store.write_skill(
+        1,
+        Tier1Workflow(
+            id="bench-flow", title="Benchmark workflow", steps=["run", "compare"]
+        ),
+    )
+    store.write_knowledge(make_knowledge("hw/by-platform/bmg", "BMG platform notes"))
+
+    store.close()
+    store.db_path.unlink()
+    rebuilt = DMCStore(store.root)
+    rebuilt.initialize()
+    rebuilt.rebuild_index()
+
+    # FTS5 MATCH uses implicit AND between bareword terms, so each term is
+    # queried separately against the row it uniquely appears in.
+    tier0_hits = {r.uri for r in rebuilt.search_text("cite", scopes=["skills"])}
+    tier1_hits = {r.uri for r in rebuilt.search_text("compare", scopes=["skills"])}
+    knowledge_hits = {r.uri for r in rebuilt.search_text("bmg", scopes=["knowledge"])}
+    assert "dmc://skill/tier0/always-cite" in tier0_hits
+    assert "dmc://skill/tier1/bench-flow" in tier1_hits
+    assert "dmc://knowledge/hw/by-platform/bmg" in knowledge_hits
 
 
 def test_rebuild_index_includes_pending_proposals(tmp_path: Path) -> None:

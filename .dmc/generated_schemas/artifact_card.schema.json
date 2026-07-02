@@ -76,6 +76,30 @@
       "title": "Provenance",
       "type": "array"
     },
+    "raw_artifact_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raw Artifact Path"
+    },
+    "raw_artifact_uri": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raw Artifact Uri"
+    },
     "summary": {
       "title": "Summary",
       "type": "string"

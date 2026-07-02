@@ -433,17 +433,33 @@
       ]
     },
     "R01_DURABLE_CONTRACTS": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/R01_DURABLE_CONTRACTS.md",
       "dependencies": [],
       "blockers": [],
-      "attempts": [],
       "review_origin": "docs/v0/review.md sections 2, 6, 10, 15(store)",
       "priority": "P1",
-      "summary": "Canonical .dmc/skills & .dmc/knowledge store contract, path-traversal containment in store, and portable dmc:// artifact URIs (no absolute file:// paths)."
+      "summary": "Canonical .dmc/skills & .dmc/knowledge store contract, path-traversal containment in store, and portable dmc:// artifact URIs (no absolute file:// paths).",
+      "active_agent": "module-impl-agent-R01",
+      "attempt_id": "attempt_20260701090000",
+      "started_at": "2026-07-01T09:00:00Z",
+      "completed_at": "2026-07-01T09:00:00Z",
+      "acceptance_report": "reports/acceptance/R01_DURABLE_CONTRACTS_attempt_20260701090000.md",
+      "handoff_report": "reports/handoffs/R01_DURABLE_CONTRACTS_attempt_20260701090000.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260701090000",
+          "agent": "module-impl-agent-R01",
+          "started_at": "2026-07-01T09:00:00Z",
+          "completed_at": "2026-07-01T09:00:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/R01_DURABLE_CONTRACTS_attempt_20260701090000.md",
+          "handoff_report": "reports/handoffs/R01_DURABLE_CONTRACTS_attempt_20260701090000.md"
+        }
+      ]
     },
     "R02_STATE_AND_BRIEFING": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/R02_STATE_AND_BRIEFING.md",
       "dependencies": [
         "R01_DURABLE_CONTRACTS"
@@ -543,6 +559,14 @@
       "report": "docs/v0/review.md",
       "completed_at": "2026-07-01T09:00:00Z",
       "summary": "V0 review (docs/v0/review.md) decomposed into 5 claimable remediation modules for V0.1: R01_DURABLE_CONTRACTS (skills/knowledge layout + path safety + portable artifact URI), R02_STATE_AND_BRIEFING (state patch vs replace + briefing latest-resource loop), R03_MEMORY_QUALITY (executable precheck rules + TraceObservation.status enum), R04_RETRIEVAL_AND_ADAPTERS (strict/best-effort search + bundle-relative adapter paths), R05_DOCS_AND_CI (evals.py doc drift + CI + CLI smoke test). Dependency order: R01 -> R02; R01/R03/R04 independent; R05 depends on R01-R04. R01, R03, R04 are ready to claim. Three larger V0.2 items parked in backlog_v0_2. Each module has a card under modules/R0*.md and is meant for a fresh single-context agent."
+    },
+    {
+      "milestone": "R01_DURABLE_CONTRACTS_DONE",
+      "attempt_id": "attempt_20260701090000",
+      "result": "GO",
+      "report": "reports/acceptance/R01_DURABLE_CONTRACTS_attempt_20260701090000.md",
+      "completed_at": "2026-07-01T09:00:00Z",
+      "summary": "R01_DURABLE_CONTRACTS implemented on branch r01-durable-contracts: .dmc/skills (tier0/1/2) and .dmc/knowledge are now the canonical single-source-of-truth layout with dedicated write_skill/read_skill/list_skills and write_knowledge/read_knowledge/list_knowledge APIs; dmc://skill/tier{0,1,2}/<id> and dmc://knowledge/<id> resolve through them (not .dmc/objects); write_object/read_object reject the now-reserved 'skill'/'knowledge' kinds. Added _safe_child() path-traversal containment for kind/object_id (flat Slug) and nested knowledge ids (new KnowledgePath type, every segment validated, hierarchy allowed, traversal is not). record_artifact now persists a portable raw_artifact_path/raw_artifact_uri (dmc://artifact/raw/<id>/<filename>) and normalizes the card's own uri to it too, so no file:// absolute path is ever persisted. Regenerated .dmc/generated_schemas/*. Acceptance green: 314 tests pass (up from 286), ruff clean, dmc --help exit 0. R02_STATE_AND_BRIEFING is now unblocked (status ready); R03/R04 remain independently ready. Next: push r01-durable-contracts branch, open a PR, await review/merge."
     }
   ],
   "decisions": [
@@ -571,5 +595,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-07-01T09:00:00Z"
+  "updated_at": "2026-07-01T09:15:00Z"
 }

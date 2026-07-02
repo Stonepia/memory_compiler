@@ -9,10 +9,23 @@ Layout under ``<root>/.dmc``::
     memory/{sessions,episodes,failure_modes,eval_cases}/
     artifacts/index.jsonl      append-only artifact index (JSONL)
     artifacts/cards/<id>.yaml   artifact card files
-    artifacts/raw/
-    objects/<kind>/<id>.<ext>   generic human-editable objects
+    artifacts/raw/<id>/<filename>  raw artifact bytes (referenced, never inlined)
+    skills/tier0/<id>.yaml     always-on policy skills (Tier0Policy)
+    skills/tier1/<id>.yaml     workflow skills (Tier1Workflow)
+    skills/tier2/<id>.yaml     atomic action skills (Tier2Atom)
+    knowledge/<id>.yaml        durable knowledge refs; ``<id>`` may be a
+                               nested path, e.g. ``hw/by-platform/bmg.yaml``
+    objects/<kind>/<id>.<ext>  generic human-editable objects (NOT skills or
+                               knowledge — those have dedicated APIs below)
     state/project_state.yaml    project state (source of truth)
     index.sqlite3              FTS5 search index (rebuildable cache)
+
+``.dmc/skills`` and ``.dmc/knowledge`` are the single source of truth for
+skills and knowledge: :meth:`write_object`/:meth:`read_object` refuse
+``kind in ("skill", "knowledge")`` and direct callers to
+:meth:`write_skill`/:meth:`read_skill`/:meth:`list_skills` and
+:meth:`write_knowledge`/:meth:`read_knowledge`/:meth:`list_knowledge` instead,
+so there is never a second, divergent write path.
 
 Design rules (see ``modules/M02_STORE.md`` and ``docs/v0/02_ARCHITECTURE.md``):
 
@@ -23,6 +36,9 @@ Design rules (see ``modules/M02_STORE.md`` and ``docs/v0/02_ARCHITECTURE.md``):
 * URIs use known schemes accepted by ``src/dmc/schemas.py`` (here: ``dmc://``).
 * Errors are explicit DMC exceptions, never bare ``Exception`` or silent
   ``None`` for expected failures.
+* All file paths derived from caller-provided ids are resolved through
+  :func:`_safe_child`, which rejects any path that would escape its base
+  directory (no ``..`` traversal, no absolute overrides, no symlink escape).
 """
 
 from __future__ import annotations
@@ -37,9 +53,12 @@ import yaml
 from pydantic import BaseModel, ValidationError
 
 from dmc.schemas import (
+    SLUG_RE,
     ArtifactCard,
+    KnowledgeRef,
     ProjectState,
     SearchResult,
+    SkillCard,
     SkillUpdateProposal,
     TraceEvent,
 )
@@ -92,6 +111,79 @@ _KIND_PROJECT_STATE = "project_state"
 _KIND_ARTIFACT = "artifact"
 _KIND_EVENT = "event"
 _KIND_PROPOSAL = "proposal"
+_KIND_SKILL = "skill"
+_KIND_KNOWLEDGE = "knowledge"
+
+#: Kinds that must never be written through the generic :meth:`write_object` /
+#: :meth:`read_object` path (they have dedicated, canonical APIs below).
+_RESERVED_KINDS = frozenset({_KIND_SKILL, _KIND_KNOWLEDGE})
+
+#: Tier number -> ``.dmc/skills/<dir>`` directory name.
+_SKILL_TIER_DIRS: dict[int, str] = {0: "tier0", 1: "tier1", 2: "tier2"}
+_SKILL_DIR_TIERS: dict[str, int] = {v: k for k, v in _SKILL_TIER_DIRS.items()}
+
+
+def _validate_slug_segment(value: str, *, what: str) -> str:
+    """Validate a single path segment (kind, object id, or skill id).
+
+    Rejects empty values, ``.``/``..``, path separators, and anything that
+    does not match the slug pattern used across DMC durable ids.
+    """
+    if not isinstance(value, str) or not value:
+        raise DMCValidationError(f"{what} must be a non-empty string")
+    if "/" in value or "\\" in value:
+        raise DMCValidationError(
+            f"invalid {what} {value!r}: must not contain a path separator"
+        )
+    if value in (".", ".."):
+        raise DMCValidationError(f"invalid {what} {value!r}: must not be '.' or '..'")
+    if not SLUG_RE.match(value):
+        raise DMCValidationError(
+            f"invalid {what} {value!r}: must be slug-like "
+            "(alphanumeric start; only letters, digits, '.', '-', '_')"
+        )
+    return value
+
+
+def _validate_knowledge_segments(value: str) -> list[str]:
+    """Split and validate a (possibly nested) knowledge id into segments.
+
+    Every ``/``-separated segment must independently be slug-like; empty
+    segments (from a leading/trailing/doubled ``/``), ``.``/``..``, and
+    backslashes are all rejected. Hierarchical refs (e.g.
+    ``hw/by-platform/bmg``) are allowed; traversal is not.
+    """
+    if not isinstance(value, str) or not value:
+        raise DMCValidationError("knowledge id must be a non-empty string")
+    if "\\" in value:
+        raise DMCValidationError(f"invalid knowledge id {value!r}: contains '\\\\'")
+    if value.startswith("/") or value.endswith("/"):
+        raise DMCValidationError(
+            f"invalid knowledge id {value!r}: must not be absolute or end with '/'"
+        )
+    segments = value.split("/")
+    for segment in segments:
+        _validate_slug_segment(segment, what="knowledge id segment")
+    return segments
+
+
+def _safe_child(base: Path, *parts: str) -> Path:
+    """Resolve ``base / *parts`` and reject any path that escapes ``base``.
+
+    ``base`` need not exist. Used for every filesystem path derived from a
+    caller-provided id so a crafted ``..`` (or a symlink under an existing
+    directory) can never write/read outside its intended directory.
+    """
+    resolved_base = base.resolve()
+    candidate = resolved_base.joinpath(*parts)
+    resolved_candidate = candidate.resolve()
+    try:
+        resolved_candidate.relative_to(resolved_base)
+    except ValueError as exc:
+        raise DMCValidationError(
+            f"path {candidate} escapes base directory {resolved_base}"
+        ) from exc
+    return resolved_candidate
 
 
 class DMCStore:
@@ -113,6 +205,8 @@ class DMCStore:
         self.artifacts_cards_dir = self.artifacts_dir / "cards"
         self.artifacts_index_path = self.artifacts_dir / "index.jsonl"
         self.objects_dir = self.dmc_dir / "objects"
+        self.skills_dir = self.dmc_dir / "skills"
+        self.knowledge_dir = self.dmc_dir / "knowledge"
         self.state_dir = self.dmc_dir / "state"
         self.project_state_path = self.state_dir / "project_state.yaml"
         self.db_path = self.dmc_dir / "index.sqlite3"
@@ -134,6 +228,10 @@ class DMCStore:
             self.artifacts_cards_dir,
             self.artifacts_dir / "raw",
             self.objects_dir,
+            self.skills_dir / "tier0",
+            self.skills_dir / "tier1",
+            self.skills_dir / "tier2",
+            self.knowledge_dir,
             self.state_dir,
         ]
         try:
@@ -303,11 +401,22 @@ class DMCStore:
 
         ``data`` may be a Pydantic model or a plain dict. Supported ``ext``:
         ``yaml``/``yml``, ``json``, ``md``/``markdown``.
+
+        ``kind`` and ``object_id`` must each be a single slug-like path
+        segment (no ``/``, ``..``, empty, or backslash) — resulting paths are
+        additionally verified with :func:`_safe_child`. ``kind`` may not be
+        ``"skill"`` or ``"knowledge"``: those durable object types have their
+        own canonical store (:meth:`write_skill`, :meth:`write_knowledge`) and
+        must never be written through this generic path.
         """
-        if not kind or not isinstance(kind, str):
-            raise DMCValidationError("write_object requires a non-empty kind")
-        if not object_id or not isinstance(object_id, str):
-            raise DMCValidationError("write_object requires a non-empty object_id")
+        _validate_slug_segment(kind, what="kind")
+        _validate_slug_segment(object_id, what="object_id")
+        if kind in _RESERVED_KINDS:
+            raise DMCValidationError(
+                f"kind {kind!r} is reserved: use write_skill()/write_knowledge() "
+                "instead of write_object() so .dmc/skills and .dmc/knowledge "
+                "remain the single source of truth"
+            )
         norm_ext = ext.lower().lstrip(".")
         if norm_ext not in _SUPPORTED_EXTS:
             raise DMCValidationError(
@@ -321,7 +430,7 @@ class DMCStore:
         else:
             raise DMCValidationError("data must be a pydantic model or a dict")
 
-        target = self.objects_dir / kind / f"{object_id}.{norm_ext}"
+        target = _safe_child(self.objects_dir, kind, f"{object_id}.{norm_ext}")
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(self._serialize(payload, norm_ext), encoding="utf-8")
@@ -372,19 +481,27 @@ class DMCStore:
             return self._read_project_state_dict()
         if kind == _KIND_EVENT:
             return self._read_event_dict(obj_id)
+        if kind == _KIND_SKILL:
+            return self._read_skill_dict(obj_id, uri=uri)
+        if kind == _KIND_KNOWLEDGE:
+            return self._read_knowledge_dict(obj_id, uri=uri)
 
         if kind == _KIND_ARTIFACT:
+            _validate_slug_segment(obj_id, what="object_id")
             candidate_dir = self.artifacts_cards_dir
         elif kind == _KIND_PROPOSAL:
             # Proposals are persisted under .dmc/proposals/pending/<id>.yaml,
             # not under the generic objects/ tree.
+            _validate_slug_segment(obj_id, what="object_id")
             pending_dir = self.dmc_dir / "proposals" / "pending"
             path = self._find_object_file(pending_dir, obj_id)
             if path is None:
                 raise DMCNotFoundError(f"no object file found for uri {uri!r}")
             return self._deserialize(path)
         else:
-            candidate_dir = self.objects_dir / kind
+            _validate_slug_segment(kind, what="kind")
+            _validate_slug_segment(obj_id, what="object_id")
+            candidate_dir = _safe_child(self.objects_dir, kind)
 
         path = self._find_object_file(candidate_dir, obj_id)
         if path is None:
@@ -438,6 +555,150 @@ class DMCStore:
             if event.event_id == event_id:
                 return event.model_dump(mode="json")
         raise DMCNotFoundError(f"no event with id {event_id!r}")
+
+    # ------------------------------------------------------------------
+    # Skills (canonical: .dmc/skills/tier{0,1,2}/<id>.yaml)
+    # ------------------------------------------------------------------
+
+    def write_skill(self, tier: int, card: SkillCard) -> str:
+        """Persist a :class:`SkillCard` under its canonical tier directory.
+
+        Returns the ``dmc://skill/tier{N}/<id>`` URI. ``tier`` must be
+        ``0``, ``1``, or ``2`` and must match ``card.tier``.
+        """
+        if not isinstance(card, SkillCard):
+            raise DMCValidationError("write_skill requires a SkillCard instance")
+        if tier not in _SKILL_TIER_DIRS:
+            raise DMCValidationError(
+                f"invalid skill tier {tier!r}: must be one of {sorted(_SKILL_TIER_DIRS)}"
+            )
+        if card.tier != tier:
+            raise DMCValidationError(
+                f"tier {tier!r} does not match card.tier {card.tier!r}"
+            )
+        _validate_slug_segment(card.id, what="skill id")
+        tier_dir = _SKILL_TIER_DIRS[tier]
+
+        payload = card.model_dump(mode="json")
+        target = _safe_child(self.skills_dir, tier_dir, f"{card.id}.yaml")
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(
+                yaml.safe_dump(payload, sort_keys=True, allow_unicode=True),
+                encoding="utf-8",
+            )
+        except OSError as exc:  # pragma: no cover
+            raise DMCStorageError(f"failed to write skill: {exc}") from exc
+
+        uri = f"dmc://{_KIND_SKILL}/{tier_dir}/{card.id}"
+        conn = self._connect()
+        self._index_row(
+            conn,
+            uri=uri,
+            kind="skills",
+            scope="skills",
+            title=str(payload.get("title") or card.id),
+            body=self._searchable_body(payload),
+        )
+        return uri
+
+    def read_skill(self, tier: int, skill_id: str) -> dict:
+        """Read a skill card dict for ``tier`` (0/1/2) and ``skill_id``."""
+        if tier not in _SKILL_TIER_DIRS:
+            raise DMCValidationError(
+                f"invalid skill tier {tier!r}: must be one of {sorted(_SKILL_TIER_DIRS)}"
+            )
+        return self._read_skill_dict(f"{_SKILL_TIER_DIRS[tier]}/{skill_id}")
+
+    def list_skills(self, tier: int | None = None) -> list[dict]:
+        """List skill card dicts, optionally filtered to a single ``tier``."""
+        if tier is not None and tier not in _SKILL_TIER_DIRS:
+            raise DMCValidationError(
+                f"invalid skill tier {tier!r}: must be one of {sorted(_SKILL_TIER_DIRS)}"
+            )
+        tier_dirs = (
+            [_SKILL_TIER_DIRS[tier]] if tier is not None else list(_SKILL_TIER_DIRS.values())
+        )
+        results: list[dict] = []
+        for tier_dir in tier_dirs:
+            directory = self.skills_dir / tier_dir
+            if not directory.exists():
+                continue
+            for path in sorted(directory.glob("*.yaml")):
+                results.append(self._deserialize(path))
+        return results
+
+    def _read_skill_dict(self, obj_id: str, *, uri: str | None = None) -> dict:
+        parts = obj_id.split("/", 1)
+        if len(parts) != 2 or parts[0] not in _SKILL_DIR_TIERS:
+            raise DMCValidationError(
+                f"invalid skill uri {uri or obj_id!r}: expected "
+                "'dmc://skill/tier{0,1,2}/<id>'"
+            )
+        tier_dir, skill_id = parts
+        _validate_slug_segment(skill_id, what="skill id")
+        target = _safe_child(self.skills_dir, tier_dir, f"{skill_id}.yaml")
+        if not target.exists():
+            raise DMCNotFoundError(f"no skill file found for uri {uri or obj_id!r}")
+        return self._deserialize(target)
+
+    # ------------------------------------------------------------------
+    # Knowledge (canonical: .dmc/knowledge/<id>.yaml, id may be nested)
+    # ------------------------------------------------------------------
+
+    def write_knowledge(self, ref: KnowledgeRef) -> str:
+        """Persist a :class:`KnowledgeRef`; return its ``dmc://knowledge/<id>`` URI.
+
+        ``ref.id`` may be a nested path (e.g. ``hw/by-platform/bmg``); every
+        segment is independently validated as slug-like.
+        """
+        if not isinstance(ref, KnowledgeRef):
+            raise DMCValidationError("write_knowledge requires a KnowledgeRef instance")
+        segments = _validate_knowledge_segments(ref.id)
+
+        payload = ref.model_dump(mode="json")
+        target = _safe_child(self.knowledge_dir, *segments[:-1], f"{segments[-1]}.yaml")
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(
+                yaml.safe_dump(payload, sort_keys=True, allow_unicode=True),
+                encoding="utf-8",
+            )
+        except OSError as exc:  # pragma: no cover
+            raise DMCStorageError(f"failed to write knowledge: {exc}") from exc
+
+        uri = f"dmc://{_KIND_KNOWLEDGE}/{ref.id}"
+        conn = self._connect()
+        self._index_row(
+            conn,
+            uri=uri,
+            kind="knowledge",
+            scope="knowledge",
+            title=str(payload.get("summary") or ref.id),
+            body=self._searchable_body(payload),
+        )
+        return uri
+
+    def read_knowledge(self, knowledge_id: str) -> dict:
+        """Read a knowledge ref dict by its (possibly nested) id."""
+        return self._read_knowledge_dict(knowledge_id)
+
+    def list_knowledge(self) -> list[dict]:
+        """List all knowledge ref dicts under ``.dmc/knowledge`` (sorted)."""
+        if not self.knowledge_dir.exists():
+            return []
+        results: list[dict] = []
+        for path in sorted(self.knowledge_dir.rglob("*.yaml")):
+            if path.is_file():
+                results.append(self._deserialize(path))
+        return results
+
+    def _read_knowledge_dict(self, obj_id: str, *, uri: str | None = None) -> dict:
+        segments = _validate_knowledge_segments(obj_id)
+        target = _safe_child(self.knowledge_dir, *segments[:-1], f"{segments[-1]}.yaml")
+        if not target.exists():
+            raise DMCNotFoundError(f"no knowledge file found for uri {uri or obj_id!r}")
+        return self._deserialize(target)
 
     # ------------------------------------------------------------------
     # Project state
@@ -743,6 +1004,42 @@ class DMCStore:
                     kind=kind,
                     scope=kind,
                     title=str(data.get("title") or data.get("summary") or path.stem),
+                    body=self._searchable_body(data),
+                    commit=False,
+                )
+                count += 1
+
+        # Skills (.dmc/skills/tier{0,1,2}/<id>.yaml — canonical, not objects/).
+        for tier_dir in _SKILL_TIER_DIRS.values():
+            directory = self.skills_dir / tier_dir
+            if not directory.exists():
+                continue
+            for path in sorted(directory.glob("*.yaml")):
+                data = self._deserialize(path)
+                self._index_row(
+                    conn,
+                    uri=f"dmc://{_KIND_SKILL}/{tier_dir}/{path.stem}",
+                    kind="skills",
+                    scope="skills",
+                    title=str(data.get("title") or path.stem),
+                    body=self._searchable_body(data),
+                    commit=False,
+                )
+                count += 1
+
+        # Knowledge (.dmc/knowledge/<id>.yaml, id may be nested).
+        if self.knowledge_dir.exists():
+            for path in sorted(self.knowledge_dir.rglob("*.yaml")):
+                if not path.is_file():
+                    continue
+                rel_id = path.relative_to(self.knowledge_dir).with_suffix("").as_posix()
+                data = self._deserialize(path)
+                self._index_row(
+                    conn,
+                    uri=f"dmc://{_KIND_KNOWLEDGE}/{rel_id}",
+                    kind=_KIND_KNOWLEDGE,
+                    scope=_KIND_KNOWLEDGE,
+                    title=str(data.get("summary") or rel_id),
                     body=self._searchable_body(data),
                     commit=False,
                 )

@@ -12,7 +12,7 @@ from dmc.retriever import (
     rank_results,
     search,
 )
-from dmc.schemas import SearchRequest, SearchResult
+from dmc.schemas import KnowledgeRef, SearchRequest, SearchResult
 from dmc.store import DMCStore
 
 
@@ -41,17 +41,15 @@ def seeded_store(tmp_path) -> DMCStore:
     )
 
     # Knowledge ref WITH provenance.
-    store.write_object(
-        "knowledge",
-        "bmg_hw_spec",
-        {
-            "id": "bmg_hw_spec",
-            "kind": "hw",
-            "uri": "https://example.com/bmg",
-            "summary": "BMG hardware occupancy characteristics",
-            "tags": ["bmg", "hardware"],
-            "provenance": [{"source": "https://example.com/bmg-spec"}],
-        },
+    store.write_knowledge(
+        KnowledgeRef(
+            id="bmg_hw_spec",
+            kind="hw",
+            uri="https://example.com/bmg",
+            summary="BMG hardware occupancy characteristics",
+            tags=["bmg", "hardware"],
+            provenance=[{"source": "https://example.com/bmg-spec"}],
+        )
     )
 
     # Episode.
