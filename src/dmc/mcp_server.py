@@ -276,17 +276,32 @@ def dmc_export_agent_bundle(
         return envelope(False, None, [f"dmc.adapters import error: {exc}"])
 
     export_agent_bundle = getattr(adapters_mod, "export_agent_bundle", None)
-    if export_agent_bundle is None:
+    default_out_dir = getattr(adapters_mod, "default_out_dir", None)
+    if export_agent_bundle is None or default_out_dir is None:
         return envelope(False, None, ["M10_ADAPTERS not yet implemented"])
+    target = payload.get("target")
+    out = payload.get("out")
     try:
+        # Never default to store.root itself: an explicit user-supplied `out`
+        # is used as-is, otherwise fall back to the safe staging directory so
+        # a bundle export can never silently overwrite the caller's own
+        # AGENTS.md or other root files.
+        out_dir = out if out else default_out_dir(store.root, target)
         result = export_agent_bundle(
-            target=payload.get("target"),
-            out=payload.get("out"),
-            store=store,
+            target=target,
+            out_dir=out_dir,
+            project_root=store.root,
         )
-        data = result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+        if hasattr(result, "model_dump"):
+            data = result.model_dump(mode="json")
+        elif isinstance(result, list):
+            # export_agent_bundle returns list[Path]; stringify for a
+            # JSON-compatible envelope.
+            data = [str(p) for p in result]
+        else:
+            data = result
         return envelope(True, data)
-    except (DMCError, ValueError, TypeError) as exc:  # pragma: no cover - needs M10
+    except (DMCError, ValueError, TypeError) as exc:
         return envelope(False, None, [str(exc)])
 
 
