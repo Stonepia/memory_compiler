@@ -327,7 +327,14 @@
           "completed_at": "2026-07-01T06:20:00Z",
           "result": "done",
           "acceptance_report": "reports/acceptance/M10_ADAPTERS_attempt_20260701061500.md",
-          "handoff_report": "reports/handoffs/M10_ADAPTERS_attempt_20260701061500.md"
+          "handoff_report": "reports/handoffs/M10_ADAPTERS_attempt_20260701061500.md",
+          "review": {
+            "result": "changes_required",
+            "summary": "PR #3 review found two blocking issues: (1) the Codex config template referenced an unimplemented DMC_ROOT env override; dmc serve/resolve_root only honor an explicit --root argument. (2) export_agent_bundle's public API used out=None with a default-to-project-root behavior instead of the module card's required explicit out_dir, and unconditionally overwrote files at the resolved root (this repo's own root AGENTS.md would have been overwritten by a codex/opencode export with no explicit out).",
+            "resolved": true,
+            "resolved_at": "2026-07-01T06:45:00Z",
+            "resolution": "Codex template now uses the real `dmc serve --root .` CLI flag instead of DMC_ROOT. export_agent_bundle renamed out -> required out_dir (raises ValueError/TypeError rather than guessing); added default_out_dir(project_root, target) staging helper (.dmc/adapters/generated/<target>) used by the CLI and MCP wrapper whenever the user does not pass an explicit --out/out, so a bundle export can never silently overwrite root files. Added tests proving: out_dir is required, out_dir=None raises, a pre-existing root AGENTS.md survives a default export, default_out_dir is never the project root, and the codex config template's --root flag is real (dmc serve --help). Also strengthened test_mcp_server.py's export-bundle test to assert the envelope is JSON-serializable (list[Path] stringified) and never targets store.root directly. Re-ran acceptance: pytest 262 passed (up from 257), ruff clean, dmc --help exit 0, uv sync ok. No tests weakened."
+          }
         }
       ]
     },

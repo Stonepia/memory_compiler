@@ -6,6 +6,8 @@ temporary DMC root and a real :class:`DMCStore`. No network server is spun up.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from dmc import mcp_server as m
@@ -146,6 +148,18 @@ def test_export_agent_bundle_lazy_fallback(store):
     else:
         # M10 present: lazy fallback successfully delegated.
         assert r["data"] is not None
+        assert isinstance(r["data"], list) and r["data"]
+        # The envelope must be JSON-serializable end to end: list[Path] is
+        # not, so every entry must already be stringified.
+        assert all(isinstance(p, str) for p in r["data"])
+        json.dumps(r)
+        # No explicit `out` was given: must never write into the store root
+        # itself (only into the safe staging directory under it).
+        assert not any(p == str(store.root / "AGENTS.md") for p in r["data"])
+        assert all(
+            str(store.root / ".dmc" / "adapters" / "generated" / "codex") in p
+            for p in r["data"]
+        )
 
 
 def test_invalid_input_returns_envelope_not_exception(store):

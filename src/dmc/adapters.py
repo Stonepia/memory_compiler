@@ -31,9 +31,14 @@ Public API
     Relative path -> file content for the Copilot bundle.
 ``render_opencode_bundle(project_root) -> dict[str, str]``
     Relative path -> file content for the OpenCode bundle.
-``export_agent_bundle(target, out=None, *, store=None, project_root=None) -> list[Path]``
-    Render the bundle for ``target`` and write it under ``out`` (or the
-    resolved project root), returning the list of written paths.
+``export_agent_bundle(target, out_dir, *, project_root=None, store=None) -> list[Path]``
+    Render the bundle for ``target`` and write it under the required
+    ``out_dir``, returning the list of written paths. ``out_dir`` is never
+    defaulted to the project root: a bundle export must not silently
+    overwrite a caller's own ``AGENTS.md`` or other root files.
+``default_out_dir(project_root, target) -> Path``
+    The staging directory CLI/MCP callers should use when the user did not
+    give an explicit output directory: ``<project_root>/.dmc/adapters/generated/<target>``.
 """
 
 from __future__ import annotations
@@ -48,6 +53,7 @@ __all__ = [
     "render_copilot_bundle",
     "render_opencode_bundle",
     "export_agent_bundle",
+    "default_out_dir",
 ]
 
 AdapterTarget = Literal["codex", "copilot", "opencode"]
@@ -119,10 +125,9 @@ def _codex_config_toml_template() -> str:
 
 [mcp_servers.dmc]
 command = "uv"
-args = ["run", "dmc", "serve"]
-# Optional: override the DMC project root if this config is not colocated
-# with the DMC project.
-# env = { DMC_ROOT = "." }
+args = ["run", "dmc", "serve", "--root", "."]
+# Adjust the "--root" value to the DMC project root if this config is not
+# colocated with the DMC project (`dmc serve --root <path>`).
 """
 
 
@@ -300,12 +305,23 @@ _RENDERERS = {
 # ---------------------------------------------------------------------------
 
 
+def default_out_dir(project_root: str | Path, target: str) -> Path:
+    """Default staging directory for a bundle when no explicit out_dir is given.
+
+    This is **never** the project root itself: CLI/MCP callers use this when
+    the user did not pass an explicit output directory, so that an adapter
+    export can never silently overwrite a caller's own ``AGENTS.md`` or other
+    root files.
+    """
+    return Path(project_root) / ".dmc" / "adapters" / "generated" / str(target)
+
+
 def export_agent_bundle(
     target: AdapterTarget,
-    out: str | Path | None = None,
+    out_dir: str | Path,
     *,
-    store: object | None = None,
     project_root: str | Path | None = None,
+    store: object | None = None,
 ) -> list[Path]:
     """Render and write the ``target`` adapter bundle, returning written paths.
 
@@ -313,20 +329,29 @@ def export_agent_bundle(
     ----------
     target:
         One of ``"codex"``, ``"copilot"``, ``"opencode"``.
-    out:
-        Directory the bundle is written under. Defaults to the resolved
-        project root.
+    out_dir:
+        Directory the bundle is written under. **Required** — this function
+        never guesses an output directory and never defaults to the project
+        root, so it can never silently overwrite a caller's own ``AGENTS.md``
+        or other root files. Callers with no explicit user-supplied output
+        directory should pass :func:`default_out_dir` instead.
+    project_root:
+        Optional explicit project root passed through to the bundle
+        renderers. Takes precedence over ``store.root``.
     store:
         Optional object exposing a ``.root`` attribute (e.g. a
         :class:`dmc.store.DMCStore`), used to resolve the project root when
         ``project_root`` is not given directly. Only ``.root`` is read; no
         other store behavior is used, keeping this a pure file generator.
-    project_root:
-        Optional explicit project root, takes precedence over ``store.root``.
     """
     if target not in _RENDERERS:
         raise ValueError(
             f"unknown adapter target {target!r}; expected one of {VALID_TARGETS}"
+        )
+    if out_dir is None:
+        raise ValueError(
+            "out_dir is required; refusing to guess an output directory "
+            "(use default_out_dir(project_root, target) for a safe default)"
         )
 
     if project_root is not None:
@@ -336,10 +361,9 @@ def export_agent_bundle(
     else:
         root = Path.cwd()
 
-    out_dir = Path(out) if out is not None else root
-
     files = _RENDERERS[target](root)
 
+    out_dir = Path(out_dir)
     written: list[Path] = []
     for rel_path, content in files.items():
         dest = out_dir / rel_path

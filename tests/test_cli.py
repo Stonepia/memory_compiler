@@ -56,3 +56,20 @@ def test_export_agent_bundle_invalid_target_fails_clearly(tmp_path) -> None:
         app, ["export-agent-bundle", "--target", "bogus", "--root", str(tmp_path)]
     )
     assert result.exit_code != 0
+
+
+def test_export_agent_bundle_without_out_uses_staging_dir_not_root(tmp_path) -> None:
+    # A pre-existing root AGENTS.md must never be overwritten by a bundle
+    # export that does not pass --out explicitly.
+    root_agents = tmp_path / "AGENTS.md"
+    root_agents.write_text("do not overwrite me", encoding="utf-8")
+
+    result = runner.invoke(
+        app, ["export-agent-bundle", "--target", "codex", "--root", str(tmp_path)]
+    )
+
+    assert result.exit_code == 0
+    assert root_agents.read_text(encoding="utf-8") == "do not overwrite me"
+    staged = tmp_path / ".dmc" / "adapters" / "generated" / "codex" / "AGENTS.md"
+    assert staged.exists()
+    assert str(staged) in result.output
