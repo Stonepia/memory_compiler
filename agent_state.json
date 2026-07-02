@@ -5,7 +5,7 @@
     "short_name": "dmc",
     "root": ".",
     "goal": "Build a local-first Dev Memory Compiler sidecar for coding agents.",
-    "project_status": "initialized"
+    "project_status": "delivered_v0"
   },
   "current_phase": "V0",
   "current_gate": "G02_DELIVERY_V0",
@@ -408,13 +408,29 @@
       ]
     },
     "G02_DELIVERY_V0": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/G02_DELIVERY_V0.md",
       "dependencies": [
         "G01_INTEGRATION_V0"
       ],
       "blockers": [],
-      "attempts": []
+      "active_agent": "delivery-agent-G02",
+      "attempt_id": "attempt_20260701080000",
+      "started_at": "2026-07-01T08:00:00Z",
+      "completed_at": "2026-07-01T08:00:00Z",
+      "acceptance_report": "reports/acceptance/G02_DELIVERY_V0_attempt_20260701080000.md",
+      "handoff_report": "reports/handoffs/G02_DELIVERY_V0_attempt_20260701080000.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260701080000",
+          "agent": "delivery-agent-G02",
+          "started_at": "2026-07-01T08:00:00Z",
+          "completed_at": "2026-07-01T08:00:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/G02_DELIVERY_V0_attempt_20260701080000.md",
+          "handoff_report": "reports/handoffs/G02_DELIVERY_V0_attempt_20260701080000.md"
+        }
+      ]
     }
   },
   "handoffs": [
@@ -449,6 +465,14 @@
       "report": "reports/integration/v0_integration_report.md",
       "completed_at": "2026-07-01T07:30:00Z",
       "summary": "PR #4 (M11_CLI) merged to master (squash). G01 integration gate run end-to-end through the dmc CLI: sample_task -> plan_graph.yaml -> plan_graph.mmd -> briefing.md -> precheck_result.json (decision=warn) -> events.jsonl (+event_demo_001) -> distill sess_demo (episode+eval_case+failure_mode+pending proposal) -> codex/copilot/opencode adapter bundles. All 3 bundles generated (copilot under .github/). One in-scope glue change: CLI _emit_structured now writes valid JSON for a .json --out (YAML otherwise), with a new test. Acceptance green: 286 tests pass, ruff clean, dmc --help exit 0. G02_DELIVERY_V0 now ready. Next: push g01-integration branch and open a PR; await merge before claiming G02."
+    },
+    {
+      "milestone": "G02_DELIVERY_V0_DONE",
+      "attempt_id": "attempt_20260701080000",
+      "result": "GO",
+      "report": "reports/integration/v0_delivery_report.md",
+      "completed_at": "2026-07-01T08:00:00Z",
+      "summary": "PR #5 (G01_INTEGRATION_V0) merged to master (squash). Final V0 delivery gate: README quickstart updated to the delivered loop, CHANGELOG.md 0.1.0 V0 summary added, reports/integration/v0_delivery_report.md written (commands, artifacts, known limitations, next-phase recommendations, forbidden-systems confirmation). No features or code changed. project_status set to delivered_v0. Acceptance green: 286 tests pass, ruff clean, dmc --help exit 0. V0 is complete; next claimable work is V1 (docs/v1/00_PLAN_GRAPH_AND_LEARNING_LOOP.md)."
     }
   ],
   "decisions": [],
@@ -470,5 +494,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-07-01T07:30:00Z"
+  "updated_at": "2026-07-01T08:00:00Z"
 }
