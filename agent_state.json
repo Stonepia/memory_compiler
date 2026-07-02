@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "V0",
-  "current_gate": "M11_CLI",
+  "current_gate": "G01_INTEGRATION_V0",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -339,7 +339,7 @@
       ]
     },
     "M11_CLI": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/M11_CLI.md",
       "dependencies": [
         "M01_SCHEMAS",
@@ -353,10 +353,26 @@
         "M10_ADAPTERS"
       ],
       "blockers": [],
-      "attempts": []
+      "active_agent": "module-impl-agent-M11",
+      "attempt_id": "attempt_20260701070000",
+      "started_at": "2026-07-01T07:00:00Z",
+      "completed_at": "2026-07-01T07:00:00Z",
+      "acceptance_report": "reports/acceptance/M11_CLI_attempt_20260701070000.md",
+      "handoff_report": "reports/handoffs/M11_CLI_attempt_20260701070000.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260701070000",
+          "agent": "module-impl-agent-M11",
+          "started_at": "2026-07-01T07:00:00Z",
+          "completed_at": "2026-07-01T07:00:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/M11_CLI_attempt_20260701070000.md",
+          "handoff_report": "reports/handoffs/M11_CLI_attempt_20260701070000.md"
+        }
+      ]
     },
     "G01_INTEGRATION_V0": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/G01_INTEGRATION_V0.md",
       "dependencies": [
         "M00_BOOTSTRAP",
@@ -372,11 +388,7 @@
         "M10_ADAPTERS",
         "M11_CLI"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for all V0 modules"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     },
     "G02_DELIVERY_V0": {
@@ -409,6 +421,14 @@
       "report": "reports/acceptance/M10_ADAPTERS_attempt_20260701061500.md",
       "completed_at": "2026-07-01T06:50:00Z",
       "summary": "PR #3 (M10_ADAPTERS) reviewed twice. Round 1: CHANGES_REQUIRED (Codex template referenced a non-functional DMC_ROOT env override; export_agent_bundle defaulted to the project root when no out_dir was given, risking a silent overwrite of root files). Both fixed: Codex template now uses the real `dmc serve --root .` flag; export_agent_bundle requires out_dir and never guesses an output directory, with default_out_dir() providing a safe .dmc/adapters/generated/<target> staging path for CLI/MCP callers. Round 2: PASS_WITH_NITS (mergeable; PR description updated to match). 262 tests pass. M11_CLI ready; PR #3 awaiting merge."
+    },
+    {
+      "milestone": "M11_CLI_DONE",
+      "attempt_id": "attempt_20260701070000",
+      "result": "GO",
+      "report": "reports/acceptance/M11_CLI_attempt_20260701070000.md",
+      "completed_at": "2026-07-01T07:00:00Z",
+      "summary": "M11_CLI implemented: the full V0 Typer CLI wires state/plan/graph/brief/search/precheck/record/distill to DMC core as thin adapters (no business logic in command bodies); state is a sub-app (show/commit), DMC root overridable via --dmc-root, outputs create parent dirs, failures exit non-zero with clear errors. tests/test_cli.py grew from 4 smoke tests to 29 positive/negative tests. Acceptance green: 285 tests pass (up from 262), ruff clean, `dmc --help` and `dmc state show` exit 0. M11 was the last V0 module, so G01_INTEGRATION_V0 is now ready. Next: push m11-cli branch and open a PR; await merge before claiming G01."
     }
   ],
   "decisions": [],
@@ -430,5 +450,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-07-01T06:50:00Z"
+  "updated_at": "2026-07-01T07:00:00Z"
 }
