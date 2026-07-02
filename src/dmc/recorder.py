@@ -152,15 +152,22 @@ def record_artifact(
                 f"failed to register raw artifact {str(src)!r}: {exc}"
             ) from exc
 
-        # Reference the raw file by path/URI only (no inlined bytes). Use a
-        # store-relative path when possible so the reference is portable.
+        # Reference the raw file by path/URI only (no inlined bytes). Both the
+        # path and the URI are portable (repo-relative path, dmc:// URI) —
+        # never a machine-absolute file:// URI — so durable memory can be
+        # checked out on a different machine and still resolve.
         try:
             rel = dest.relative_to(store.root).as_posix()
         except ValueError:
             rel = str(dest)
         data = card.model_dump(mode="json")
         data["raw_artifact_path"] = rel
-        data["raw_artifact_uri"] = dest.resolve().as_uri()
+        data["raw_artifact_uri"] = f"dmc://artifact/raw/{card.id}/{dest.name}"
+        # Once the raw file is registered in the store, the card's primary
+        # `uri` must also point at the portable location — never leave a
+        # machine-absolute file:// URI (the caller's original raw_path)
+        # persisted in durable memory (docs/v0/review.md §10).
+        data["uri"] = data["raw_artifact_uri"]
         card = ArtifactCard.model_validate(data)
 
     return store.save_artifact_card(card)

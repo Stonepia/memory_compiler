@@ -171,10 +171,11 @@ def test_record_artifact_with_raw_path_registers_and_does_not_inline(
     assert registered.exists()
     assert registered.read_text(encoding="utf-8") == raw_marker
 
-    # The card references the raw file by path/URI.
+    # The card references the raw file by portable path/URI — never a
+    # machine-absolute file:// path (docs/v0/review.md §10).
     card_data = store.read_object("dmc://artifact/art2")
     assert card_data["raw_artifact_path"] == ".dmc/artifacts/raw/art2/profile.txt"
-    assert card_data["raw_artifact_uri"].startswith("file://")
+    assert card_data["raw_artifact_uri"] == "dmc://artifact/raw/art2/profile.txt"
 
     # The append-only index JSONL never contains the raw bytes.
     index_text = store.artifacts_index_path.read_text(encoding="utf-8")
@@ -182,6 +183,24 @@ def test_record_artifact_with_raw_path_registers_and_does_not_inline(
     # Neither does the events log or the card file itself.
     card_file = (store.artifacts_cards_dir / "art2.yaml").read_text(encoding="utf-8")
     assert raw_marker not in card_file
+
+
+def test_record_artifact_uses_portable_dmc_uri(store: DMCStore, tmp_path: Path) -> None:
+    """No absolute file:// URI is ever persisted in durable memory (§10)."""
+    raw_src = tmp_path / "trace.log"
+    raw_src.write_text("some raw bytes", encoding="utf-8")
+
+    record_artifact(make_artifact("art9"), store, raw_path=raw_src)
+    card_data = store.read_object("dmc://artifact/art9")
+
+    assert card_data["raw_artifact_uri"] == "dmc://artifact/raw/art9/trace.log"
+    assert not card_data["raw_artifact_uri"].startswith("file://")
+    assert not Path(card_data["raw_artifact_path"]).is_absolute()
+
+    # The raw artifact card file on disk must not contain an absolute path either.
+    card_file = (store.artifacts_cards_dir / "art9.yaml").read_text(encoding="utf-8")
+    assert "file://" not in card_file
+    assert str(tmp_path) not in card_file
 
 
 def test_record_artifact_rejects_missing_raw_path(store: DMCStore, tmp_path: Path) -> None:

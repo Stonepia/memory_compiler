@@ -41,6 +41,7 @@ __all__ = [
     "KNOWN_URI_SCHEMES",
     "Slug",
     "Uri",
+    "KnowledgePath",
     "Provenance",
     "EvidenceRef",
     "TaskRequest",
@@ -139,6 +140,34 @@ def _validate_uri(value: str) -> str:
 
 Slug = Annotated[str, AfterValidator(_validate_slug)]
 Uri = Annotated[str, AfterValidator(_validate_uri)]
+
+
+def _validate_knowledge_path(value: str) -> str:
+    """Validate a (possibly nested) knowledge id, e.g. ``hw/by-platform/bmg``.
+
+    Every ``/``-separated segment must independently satisfy the same rules
+    as a flat :data:`Slug` (non-empty, slug-like, no ``.``/``..`` segment, no
+    leading/trailing ``/``, no backslash). This allows hierarchical knowledge
+    refs while keeping the same path-traversal protections as a flat id.
+    """
+    if not isinstance(value, str) or not value:
+        raise ValueError("id must be a non-empty slug-like string")
+    if "\\" in value:
+        raise ValueError(f"invalid knowledge id {value!r}: must not contain '\\\\'")
+    if value.startswith("/") or value.endswith("/"):
+        raise ValueError(
+            f"invalid knowledge id {value!r}: must not be absolute or end with '/'"
+        )
+    for segment in value.split("/"):
+        if segment in (".", ".."):
+            raise ValueError(
+                f"invalid knowledge id {value!r}: segment {segment!r} is not allowed"
+            )
+        _validate_slug(segment)
+    return value
+
+
+KnowledgePath = Annotated[str, AfterValidator(_validate_knowledge_path)]
 
 
 # ---------------------------------------------------------------------------
@@ -269,7 +298,7 @@ class KnowledgeRef(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    id: Slug
+    id: KnowledgePath
     kind: str
     uri: Uri
     summary: str
@@ -288,6 +317,13 @@ class ArtifactCard(BaseModel):
     summary: str
     metrics: dict[str, Any] = Field(default_factory=dict)
     provenance: NonEmptyProvenance
+    #: Repo-relative path to the registered raw file, e.g.
+    #: ``.dmc/artifacts/raw/<id>/<filename>`` (set by ``record_artifact``).
+    raw_artifact_path: str | None = None
+    #: Portable ``dmc://artifact/raw/<id>/<filename>`` reference to the raw
+    #: file. Must use a known scheme — never a machine-absolute ``file://``
+    #: path — so durable memory stays portable across machines.
+    raw_artifact_uri: Uri | None = None
 
 
 # ---------------------------------------------------------------------------

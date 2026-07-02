@@ -2,27 +2,6 @@
   "additionalProperties": true,
   "description": "A local search request over DMC objects.",
   "properties": {
-    "query": {
-      "title": "Query",
-      "type": "string"
-    },
-    "scopes": {
-      "items": {
-        "type": "string"
-      },
-      "title": "Scopes",
-      "type": "array"
-    },
-    "filters": {
-      "additionalProperties": true,
-      "title": "Filters",
-      "type": "object"
-    },
-    "limit": {
-      "default": 10,
-      "title": "Limit",
-      "type": "integer"
-    },
     "budget_tokens": {
       "anyOf": [
         {
@@ -34,6 +13,27 @@
       ],
       "default": null,
       "title": "Budget Tokens"
+    },
+    "filters": {
+      "additionalProperties": true,
+      "title": "Filters",
+      "type": "object"
+    },
+    "limit": {
+      "default": 10,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "query": {
+      "title": "Query",
+      "type": "string"
+    },
+    "scopes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Scopes",
+      "type": "array"
     }
   },
   "required": [
