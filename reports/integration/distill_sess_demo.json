@@ -1,0 +1,168 @@
+{
+  "session_id": "sess_demo",
+  "episode": {
+    "id": "episode-sess_demo",
+    "session_id": "sess_demo",
+    "summary": "Session sess_demo: 1 event(s), outcome=failed, phases={'benchmark': 1}",
+    "outcome": "failed",
+    "task": null,
+    "highlights": [
+      "wrong_turn[event_demo_001]: benchmark/benchmark_run -> regressed"
+    ],
+    "evidence": [
+      {
+        "uri": "event://event_demo_001",
+        "description": "benchmark/benchmark_run: regressed",
+        "kind": "trace_event"
+      }
+    ],
+    "provenance": [
+      {
+        "source": "session://sess_demo",
+        "kind": null,
+        "detail": null,
+        "timestamp": null
+      },
+      {
+        "source": "event://event_demo_001",
+        "kind": null,
+        "detail": null,
+        "timestamp": null
+      }
+    ],
+    "labels": {
+      "wrong_turn": [
+        "event_demo_001"
+      ],
+      "useful_memory": []
+    }
+  },
+  "eval_case": {
+    "id": "evalcase-sess_demo",
+    "source_session": "sess_demo",
+    "task": {
+      "id": "sess_demo",
+      "task": "Session sess_demo: Record demo benchmark regression after a heuristic change.",
+      "repo": null,
+      "mode": null,
+      "hardware": [],
+      "changed_files": [],
+      "current_phase": null,
+      "budget_tokens": null,
+      "constraints": []
+    },
+    "outcome": {
+      "status": "failed",
+      "num_events": 1,
+      "num_failures": 1,
+      "num_success_validations": 0,
+      "counts_by_outcome": {
+        "regressed": 1
+      }
+    },
+    "labels": {
+      "wrong_turn": [
+        "event_demo_001"
+      ],
+      "useful_memory": []
+    },
+    "initial_plan_graph": "plan://sess_demo/initial",
+    "final_plan_graph": null,
+    "execution_trace": "session://sess_demo",
+    "metrics": {},
+    "future_assertions": [],
+    "provenance": [
+      {
+        "source": "session://sess_demo",
+        "kind": null,
+        "detail": null,
+        "timestamp": null
+      },
+      {
+        "source": "event://event_demo_001",
+        "kind": null,
+        "detail": null,
+        "timestamp": null
+      }
+    ]
+  },
+  "failure_modes": [
+    {
+      "id": "fm-sess_demo-event_demo_001",
+      "trigger": "benchmark/benchmark_run",
+      "description": "During 'Record demo benchmark regression after a heuristic change.' the benchmark_run action ('pytest tests/test_demo.py') resulted in outcome 'regressed'.",
+      "symptom": "regressed",
+      "avoidance": "Before repeating benchmark_run in phase 'benchmark', verify the prior failure (regressed) is addressed.",
+      "evidence": [
+        {
+          "uri": "event://event_demo_001",
+          "description": "benchmark/benchmark_run: regressed",
+          "kind": "trace_event"
+        }
+      ],
+      "provenance": [
+        {
+          "source": "session://sess_demo",
+          "kind": null,
+          "detail": null,
+          "timestamp": null
+        },
+        {
+          "source": "event://event_demo_001",
+          "kind": null,
+          "detail": null,
+          "timestamp": null
+        }
+      ],
+      "labels": {
+        "wrong_turn": [
+          "event_demo_001"
+        ]
+      }
+    }
+  ],
+  "skill_proposals": [
+    {
+      "id": "prop-avoid-sess_demo-event_demo_001",
+      "target": "skill://tier1/avoid-benchmark-benchmark_run",
+      "change_kind": "create",
+      "rationale": "Session sess_demo hit a wrong turn at event event_demo_001 (regressed); propose a pitfall-avoidance skill for benchmark/benchmark_run.",
+      "diff_summary": "create pitfall skill for benchmark/benchmark_run",
+      "status": "pending",
+      "evidence": [
+        {
+          "uri": "event://event_demo_001",
+          "description": "benchmark/benchmark_run: regressed",
+          "kind": "trace_event"
+        }
+      ],
+      "provenance": [
+        {
+          "source": "session://sess_demo",
+          "kind": null,
+          "detail": null,
+          "timestamp": null
+        },
+        {
+          "source": "event://event_demo_001",
+          "kind": null,
+          "detail": null,
+          "timestamp": null
+        }
+      ],
+      "labels": {
+        "wrong_turn": [
+          "event_demo_001"
+        ]
+      }
+    }
+  ],
+  "episode_uri": "dmc://episode/episode-sess_demo",
+  "eval_case_uri": "dmc://eval_case/evalcase-sess_demo",
+  "failure_mode_uris": [
+    "dmc://failure_mode/fm-sess_demo-event_demo_001"
+  ],
+  "proposal_uris": [
+    "dmc://proposal/prop-avoid-sess_demo-event_demo_001"
+  ]
+}

@@ -8,7 +8,7 @@
     "project_status": "initialized"
   },
   "current_phase": "V0",
-  "current_gate": "G01_INTEGRATION_V0",
+  "current_gate": "G02_DELIVERY_V0",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -372,7 +372,7 @@
       ]
     },
     "G01_INTEGRATION_V0": {
-      "status": "ready",
+      "status": "done",
       "module_doc": "modules/G01_INTEGRATION_V0.md",
       "dependencies": [
         "M00_BOOTSTRAP",
@@ -389,19 +389,31 @@
         "M11_CLI"
       ],
       "blockers": [],
-      "attempts": []
+      "active_agent": "integration-agent-G01",
+      "attempt_id": "attempt_20260701073000",
+      "started_at": "2026-07-01T07:30:00Z",
+      "completed_at": "2026-07-01T07:30:00Z",
+      "acceptance_report": "reports/acceptance/G01_INTEGRATION_V0_attempt_20260701073000.md",
+      "handoff_report": "reports/handoffs/G01_INTEGRATION_V0_attempt_20260701073000.md",
+      "attempts": [
+        {
+          "attempt_id": "attempt_20260701073000",
+          "agent": "integration-agent-G01",
+          "started_at": "2026-07-01T07:30:00Z",
+          "completed_at": "2026-07-01T07:30:00Z",
+          "result": "done",
+          "acceptance_report": "reports/acceptance/G01_INTEGRATION_V0_attempt_20260701073000.md",
+          "handoff_report": "reports/handoffs/G01_INTEGRATION_V0_attempt_20260701073000.md"
+        }
+      ]
     },
     "G02_DELIVERY_V0": {
-      "status": "blocked",
+      "status": "ready",
       "module_doc": "modules/G02_DELIVERY_V0.md",
       "dependencies": [
         "G01_INTEGRATION_V0"
       ],
-      "blockers": [
-        {
-          "summary": "waiting for G01"
-        }
-      ],
+      "blockers": [],
       "attempts": []
     }
   },
@@ -429,6 +441,14 @@
       "report": "reports/acceptance/M11_CLI_attempt_20260701070000.md",
       "completed_at": "2026-07-01T07:00:00Z",
       "summary": "M11_CLI implemented: the full V0 Typer CLI wires state/plan/graph/brief/search/precheck/record/distill to DMC core as thin adapters (no business logic in command bodies); state is a sub-app (show/commit), DMC root overridable via --dmc-root, outputs create parent dirs, failures exit non-zero with clear errors. tests/test_cli.py grew from 4 smoke tests to 29 positive/negative tests. Acceptance green: 285 tests pass (up from 262), ruff clean, `dmc --help` and `dmc state show` exit 0. M11 was the last V0 module, so G01_INTEGRATION_V0 is now ready. Next: push m11-cli branch and open a PR; await merge before claiming G01."
+    },
+    {
+      "milestone": "G01_INTEGRATION_V0_DONE",
+      "attempt_id": "attempt_20260701073000",
+      "result": "GO",
+      "report": "reports/integration/v0_integration_report.md",
+      "completed_at": "2026-07-01T07:30:00Z",
+      "summary": "PR #4 (M11_CLI) merged to master (squash). G01 integration gate run end-to-end through the dmc CLI: sample_task -> plan_graph.yaml -> plan_graph.mmd -> briefing.md -> precheck_result.json (decision=warn) -> events.jsonl (+event_demo_001) -> distill sess_demo (episode+eval_case+failure_mode+pending proposal) -> codex/copilot/opencode adapter bundles. All 3 bundles generated (copilot under .github/). One in-scope glue change: CLI _emit_structured now writes valid JSON for a .json --out (YAML otherwise), with a new test. Acceptance green: 286 tests pass, ruff clean, dmc --help exit 0. G02_DELIVERY_V0 now ready. Next: push g01-integration branch and open a PR; await merge before claiming G02."
     }
   ],
   "decisions": [],
@@ -450,5 +470,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-07-01T07:00:00Z"
+  "updated_at": "2026-07-01T07:30:00Z"
 }
