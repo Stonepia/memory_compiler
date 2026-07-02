@@ -1,0 +1,15 @@
+{
+  "decision": "warn",
+  "reasons": [
+    "Editing files without a task/plan reference."
+  ],
+  "matched_rules": [
+    "edit-without-task-ref"
+  ],
+  "warnings": [
+    "Editing files without a task/plan reference."
+  ],
+  "required_evidence_before_commit": [
+    "reference the task/plan (task_id or plan ref)"
+  ]
+}

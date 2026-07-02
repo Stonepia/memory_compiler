@@ -260,6 +260,19 @@ def test_precheck_writes_out(tmp_path) -> None:
     assert out.exists()
 
 
+def test_precheck_json_out_is_valid_json(tmp_path) -> None:
+    import json
+
+    out = tmp_path / "pc" / "result.json"
+    result = runner.invoke(
+        app,
+        ["precheck", SAMPLE_ACTION, "--out", str(out), "--dmc-root", str(tmp_path)],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert "decision" in payload
+
+
 def test_precheck_block_exits_nonzero(tmp_path) -> None:
     # A direct skill-file mutation is a block rule; the CLI signals it distinctly.
     action = tmp_path / "block.yaml"

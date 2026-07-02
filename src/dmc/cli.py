@@ -79,17 +79,27 @@ def _load_mapping(path: str) -> dict[str, Any]:
 
 
 def _emit_structured(data: Any, out: str | None) -> None:
-    """Write ``data`` as YAML to ``out`` (creating parents) or to stdout."""
+    """Write ``data`` to ``out`` (creating parents) or to stdout.
+
+    Stdout and non-``.json`` files are rendered as human-friendly YAML. When
+    ``out`` ends in ``.json`` the file is written as valid JSON instead, so a
+    ``--out result.json`` really contains JSON.
+    """
     import yaml
 
-    text = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
     if out:
         target = Path(out)
         target.parent.mkdir(parents=True, exist_ok=True)
+        if target.suffix.lower() == ".json":
+            import json
+
+            text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+        else:
+            text = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
         target.write_text(text, encoding="utf-8")
         typer.echo(str(target))
     else:
-        typer.echo(text.rstrip("\n"))
+        typer.echo(yaml.safe_dump(data, sort_keys=False, allow_unicode=True).rstrip("\n"))
 
 
 def _emit_text(text: str, out: str | None) -> None:
