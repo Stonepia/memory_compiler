@@ -8,6 +8,7 @@ that ``--out`` targets create their parent directories.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -22,6 +23,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SAMPLE_TASK = str(REPO_ROOT / "examples" / "sample_task.yaml")
 SAMPLE_ACTION = str(REPO_ROOT / "examples" / "sample_action.yaml")
 SAMPLE_EVENT = str(REPO_ROOT / "examples" / "sample_event.yaml")
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _plain(text: str) -> str:
+    """Strip ANSI escape codes so error-message assertions are robust."""
+    return _ANSI_RE.sub("", text)
 
 
 # ---------------------------------------------------------------------------
@@ -72,6 +80,7 @@ def test_state_commit_then_show(tmp_path) -> None:
 def test_state_show_without_state_fails_clearly(tmp_path) -> None:
     result = runner.invoke(app, ["state", "show", "--dmc-root", str(tmp_path)])
     assert result.exit_code != 0
+    assert "no project state" in _plain(result.output)
 
 
 def test_state_commit_invalid_payload_fails_clearly(tmp_path) -> None:
@@ -83,6 +92,7 @@ def test_state_commit_invalid_payload_fails_clearly(tmp_path) -> None:
         app, ["state", "commit", str(patch), "--dmc-root", str(tmp_path)]
     )
     assert result.exit_code != 0
+    assert "validation error" in _plain(result.output).lower()
 
 
 def test_commit_bumps_version(tmp_path) -> None:
@@ -121,6 +131,7 @@ def test_plan_writes_out_and_creates_parents(tmp_path) -> None:
 def test_plan_missing_file_fails_clearly(tmp_path) -> None:
     result = runner.invoke(app, ["plan", str(tmp_path / "nope.yaml")])
     assert result.exit_code != 0
+    assert "file not found" in _plain(result.output)
 
 
 def test_plan_invalid_task_fails_clearly(tmp_path) -> None:
@@ -128,6 +139,7 @@ def test_plan_invalid_task_fails_clearly(tmp_path) -> None:
     bad.write_text(yaml.safe_dump({"repo": "demo"}), encoding="utf-8")  # no id/task
     result = runner.invoke(app, ["plan", str(bad)])
     assert result.exit_code != 0
+    assert "validation error" in _plain(result.output).lower()
 
 
 def test_plan_non_mapping_fails_clearly(tmp_path) -> None:
@@ -135,6 +147,7 @@ def test_plan_non_mapping_fails_clearly(tmp_path) -> None:
     bad.write_text(yaml.safe_dump([1, 2, 3]), encoding="utf-8")
     result = runner.invoke(app, ["plan", str(bad)])
     assert result.exit_code != 0
+    assert "mapping" in _plain(result.output)
 
 
 # ---------------------------------------------------------------------------
@@ -171,11 +184,13 @@ def test_graph_bad_format_fails_clearly(tmp_path) -> None:
     plan_path = _write_plan(tmp_path)
     result = runner.invoke(app, ["graph", str(plan_path), "--format", "svg"])
     assert result.exit_code != 0
+    assert "unknown format" in _plain(result.output)
 
 
 def test_graph_missing_file_fails_clearly(tmp_path) -> None:
     result = runner.invoke(app, ["graph", str(tmp_path / "nope.yaml")])
     assert result.exit_code != 0
+    assert "no plan graph" in _plain(result.output)
 
 
 # ---------------------------------------------------------------------------
@@ -270,6 +285,7 @@ def test_precheck_missing_file_fails_clearly(tmp_path) -> None:
         app, ["precheck", str(tmp_path / "nope.yaml"), "--dmc-root", str(tmp_path)]
     )
     assert result.exit_code != 0
+    assert "file not found" in _plain(result.output)
 
 
 # ---------------------------------------------------------------------------
@@ -294,6 +310,7 @@ def test_record_invalid_event_fails_clearly(tmp_path) -> None:
     bad.write_text(yaml.safe_dump({"event_id": "x"}), encoding="utf-8")
     result = runner.invoke(app, ["record", str(bad), "--dmc-root", str(tmp_path)])
     assert result.exit_code != 0
+    assert "validation error" in _plain(result.output).lower()
 
 
 def test_distill_writes_out(tmp_path) -> None:

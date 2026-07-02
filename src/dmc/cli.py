@@ -177,9 +177,10 @@ def plan(
     from dmc.store import DMCError
 
     payload = _load_mapping(task_file)
+    store = _store(dmc_root)
     try:
         request = TaskRequest.model_validate(payload)
-        graph = plan_task(request)
+        graph = plan_task(request, store)
     except (ValidationError, DMCError, ValueError) as exc:
         raise _fail(str(exc))
 
@@ -260,7 +261,13 @@ def brief(
 def search(
     query: str = typer.Argument(..., help="Search query."),
     scope: list[str] = typer.Option(
-        None, "--scope", help="Scopes to search, e.g. skills, memory."
+        None,
+        "--scope",
+        help=(
+            "Scopes to search (repeatable); defaults to all. One of: "
+            "project_state, skills, knowledge, artifacts, episodes, "
+            "failure_modes, eval_cases, proposals."
+        ),
     ),
     dmc_root: str = _DMC_ROOT_OPTION,
 ) -> None:
