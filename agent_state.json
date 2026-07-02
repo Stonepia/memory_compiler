@@ -5,10 +5,10 @@
     "short_name": "dmc",
     "root": ".",
     "goal": "Build a local-first Dev Memory Compiler sidecar for coding agents.",
-    "project_status": "delivered_v0"
+    "project_status": "remediation_v0_1"
   },
-  "current_phase": "V0",
-  "current_gate": "G02_DELIVERY_V0",
+  "current_phase": "V0.1",
+  "current_gate": "R01_DURABLE_CONTRACTS",
   "global_rules": {
     "fresh_agent_default": true,
     "must_read_start_here": true,
@@ -431,8 +431,70 @@
           "handoff_report": "reports/handoffs/G02_DELIVERY_V0_attempt_20260701080000.md"
         }
       ]
+    },
+    "R01_DURABLE_CONTRACTS": {
+      "status": "ready",
+      "module_doc": "modules/R01_DURABLE_CONTRACTS.md",
+      "dependencies": [],
+      "blockers": [],
+      "attempts": [],
+      "review_origin": "docs/v0/review.md sections 2, 6, 10, 15(store)",
+      "priority": "P1",
+      "summary": "Canonical .dmc/skills & .dmc/knowledge store contract, path-traversal containment in store, and portable dmc:// artifact URIs (no absolute file:// paths)."
+    },
+    "R02_STATE_AND_BRIEFING": {
+      "status": "blocked",
+      "module_doc": "modules/R02_STATE_AND_BRIEFING.md",
+      "dependencies": [
+        "R01_DURABLE_CONTRACTS"
+      ],
+      "blockers": [],
+      "attempts": [],
+      "review_origin": "docs/v0/review.md sections 3, 4",
+      "priority": "P1",
+      "summary": "Honest project-state patch vs replace semantics, and close the dmc_get_briefing / dmc://briefing/latest loop by writing .dmc/briefing.md."
+    },
+    "R03_MEMORY_QUALITY": {
+      "status": "ready",
+      "module_doc": "modules/R03_MEMORY_QUALITY.md",
+      "dependencies": [],
+      "blockers": [],
+      "attempts": [],
+      "review_origin": "docs/v0/review.md sections 5, 7, 15(precheck)",
+      "priority": "P1/P2",
+      "summary": "Make custom precheck rules actually execute (or remove the API) plus surface malformed-memory warnings, and add an explicit TraceObservation.status enum so distillation stops misclassifying outcomes."
+    },
+    "R04_RETRIEVAL_AND_ADAPTERS": {
+      "status": "ready",
+      "module_doc": "modules/R04_RETRIEVAL_AND_ADAPTERS.md",
+      "dependencies": [],
+      "blockers": [],
+      "attempts": [],
+      "review_origin": "docs/v0/review.md sections 8, 9, 15(retriever)",
+      "priority": "P2",
+      "summary": "Strict vs best-effort search (stop masking errors as no-results) with metadata-based tag filtering, and bundle-relative adapter output paths."
+    },
+    "R05_DOCS_AND_CI": {
+      "status": "blocked",
+      "module_doc": "modules/R05_DOCS_AND_CI.md",
+      "dependencies": [
+        "R01_DURABLE_CONTRACTS",
+        "R02_STATE_AND_BRIEFING",
+        "R03_MEMORY_QUALITY",
+        "R04_RETRIEVAL_AND_ADAPTERS"
+      ],
+      "blockers": [],
+      "attempts": [],
+      "review_origin": "docs/v0/review.md sections 11, 12, 14",
+      "priority": "P2",
+      "summary": "Fix architecture doc/code drift (evals.py, briefing/planner wording) and add GitHub Actions CI plus a CLI smoke test; closing V0.1 remediation step."
     }
   },
+  "backlog_v0_2": [
+    "review.md §12 real deterministic Tier-1/Tier-2 skill selection (planner/renderer/retriever)",
+    "review.md §13 structured machine-readable briefing envelope (BriefingData JSON)",
+    "review.md §15(distiller) skill-proposal add/merge/revise/drop lifecycle with real targets"
+  ],
   "handoffs": [
     {
       "milestone": "M08_CORE_READY",
@@ -473,9 +535,24 @@
       "report": "reports/integration/v0_delivery_report.md",
       "completed_at": "2026-07-01T08:00:00Z",
       "summary": "PR #5 (G01_INTEGRATION_V0) merged to master (squash). Final V0 delivery gate: README quickstart updated to the delivered loop, CHANGELOG.md 0.1.0 V0 summary added, reports/integration/v0_delivery_report.md written (commands, artifacts, known limitations, next-phase recommendations, forbidden-systems confirmation). No features or code changed. project_status set to delivered_v0. Acceptance green: 286 tests pass, ruff clean, dmc --help exit 0. V0 is complete; next claimable work is V1 (docs/v1/00_PLAN_GRAPH_AND_LEARNING_LOOP.md)."
+    },
+    {
+      "milestone": "V0_1_REMEDIATION_PLANNED",
+      "attempt_id": "attempt_20260701090000",
+      "result": "PLAN",
+      "report": "docs/v0/review.md",
+      "completed_at": "2026-07-01T09:00:00Z",
+      "summary": "V0 review (docs/v0/review.md) decomposed into 5 claimable remediation modules for V0.1: R01_DURABLE_CONTRACTS (skills/knowledge layout + path safety + portable artifact URI), R02_STATE_AND_BRIEFING (state patch vs replace + briefing latest-resource loop), R03_MEMORY_QUALITY (executable precheck rules + TraceObservation.status enum), R04_RETRIEVAL_AND_ADAPTERS (strict/best-effort search + bundle-relative adapter paths), R05_DOCS_AND_CI (evals.py doc drift + CI + CLI smoke test). Dependency order: R01 -> R02; R01/R03/R04 independent; R05 depends on R01-R04. R01, R03, R04 are ready to claim. Three larger V0.2 items parked in backlog_v0_2. Each module has a card under modules/R0*.md and is meant for a fresh single-context agent."
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D-V0.1-001",
+      "date": "2026-07-01",
+      "decision": "Address the V0 review (docs/v0/review.md) as 5 independently-claimable remediation modules (R01-R05), one per fresh-agent context, rather than a single sweep. P1 contract fixes precede P2 polish and the closing docs/CI step. Deferred three heavier V0.2 items to backlog_v0_2.",
+      "evidence": "docs/v0/review.md section 18 (fix-priority list)"
+    }
+  ],
   "blockers": [],
   "quality_gates": {
     "v0_required": [
@@ -494,5 +571,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-07-01T08:00:00Z"
+  "updated_at": "2026-07-01T09:00:00Z"
 }
