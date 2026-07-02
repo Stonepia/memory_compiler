@@ -53,10 +53,11 @@ structured briefing JSON envelope is deferred V0.2 backlog — not required here
        decisions: list[ProjectDecision] = Field(default_factory=list)
        evidence: list[EvidenceRef] = Field(default_factory=list)
    ```
-   Add schema tests and regenerate the generated JSON schema. **Fallback:** if this
-   proves too large for one context, restrict the V0.1 patch to the CURRENT explicit
-   fields only and defer `next_actions/decisions/evidence` patch ops to V0.2 — but
-   never write them into `extra`.
+   Add schema tests and regenerate the generated JSON schema. **Fallback:** if
+   enriching `ProjectState` proves too large for one context, STOP and mark R02
+   `blocked` / `needs_revision` with a blocker report. Do NOT implement a reduced
+   patch surface (it would fail the required typed-field tests), and never write
+   these fields into `extra`.
 2. **State patch vs replace.** Add `ProjectStatePatch` (partial: phase/summary/
    active_task set, open_questions add/remove, next_actions set, decisions/
    evidence append) and `store.patch_project_state(patch) -> (version, diff)`.
