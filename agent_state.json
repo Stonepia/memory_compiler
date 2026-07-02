@@ -401,6 +401,14 @@
       "report": "reports/integration/M08_CORE_READY_REVIEW_attempt_20260625090000.md",
       "completed_at": "2026-06-25T09:00:00Z",
       "summary": "All 5 blockers from Issue #1 resolved. 210 tests pass. M09 ready to implement."
+    },
+    {
+      "milestone": "M10_ADAPTERS_PR3_REVIEW",
+      "attempt_id": "attempt_20260701061500",
+      "result": "GO",
+      "report": "reports/acceptance/M10_ADAPTERS_attempt_20260701061500.md",
+      "completed_at": "2026-07-01T06:50:00Z",
+      "summary": "PR #3 (M10_ADAPTERS) reviewed twice. Round 1: CHANGES_REQUIRED (Codex template referenced a non-functional DMC_ROOT env override; export_agent_bundle defaulted to the project root when no out_dir was given, risking a silent overwrite of root files). Both fixed: Codex template now uses the real `dmc serve --root .` flag; export_agent_bundle requires out_dir and never guesses an output directory, with default_out_dir() providing a safe .dmc/adapters/generated/<target> staging path for CLI/MCP callers. Round 2: PASS_WITH_NITS (mergeable; PR description updated to match). 262 tests pass. M11_CLI ready; PR #3 awaiting merge."
     }
   ],
   "decisions": [],
@@ -422,5 +430,5 @@
       "custom code indexer"
     ]
   },
-  "updated_at": "2026-06-29T05:40:00Z"
+  "updated_at": "2026-07-01T06:50:00Z"
 }
