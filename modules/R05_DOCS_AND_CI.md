@@ -14,7 +14,11 @@ V0 review (`docs/v0/review.md`), P2/limitations cleanup:
   eval cases, but eval-case generation lives in `src/dmc/distiller.py`. Also §12/
   §15 note the briefing "workflows/atoms" labels are plan-derived placeholders and
   planner memory-awareness is overstated.
-- **§14 CI**: `CHANGELOG` lists "no CI workflow yet" as a known limitation.
+- **§14 CI**: `CHANGELOG` lists "no CI workflow yet" as a known limitation. NOTE:
+  the original review priority list marked CI as V0.2-acceptable; this plan
+  deliberately pulls CI into V0.1 as the closing verification step AFTER the
+  contract fixes (R01–R04), so a green run reflects the remediated surface. This is
+  an intentional upgrade, not a conflict with the review.
 
 ## Dependencies
 

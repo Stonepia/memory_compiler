@@ -42,6 +42,13 @@ the M10 safety contract (explicit `out_dir` required; no silent root overwrite).
    default to strict and surface errors in the envelope. Tag filtering reads real
    object metadata. `build_context_pack` with non-positive budget returns a clear
    error / explicit placeholder, not a silent empty string.
+
+   **API shape (decide up front — do not half-change).** `search()` today returns
+   `list[SearchResult]`. To carry warnings/errors, EITHER introduce
+   `SearchResponse(results, warnings, errors)` and update ALL callers (MCP/CLI/
+   tests) together, OR keep `search()` strict + list-returning and add a separate
+   `search_best_effort(...) -> SearchResponse`. Do not silently change the return
+   type of `search()` while leaving some callers on the old shape.
 2. **Adapter paths.** Renderers return bundle-relative keys only (`README.md`,
    `AGENTS.md`, `.codex/config.toml.template`, `.github/copilot-instructions.md` —
    no `.dmc/adapters/<target>/...` prefixes). `export_agent_bundle()` writes

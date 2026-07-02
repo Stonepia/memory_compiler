@@ -41,12 +41,27 @@ Guard durable-memory quality. Keep everything deterministic (no LLM).
      runs built-ins then loaded rules, preserving block > warn > allow.
    - *Or:* delete the extra-rule loading and make `load_precheck_rules()` return
      built-in metadata only.
-   Either way, surface malformed failure-mode/rule files as `data_warnings`
-   instead of silent skips.
-2. **Outcome status.** Add `status: Literal["success","failure","regression",
-   "blocked","inconclusive"]` to `TraceObservation` (keep `outcome` as free text).
-   `is_failure_event` / `is_success_validation_event` read `status` first, falling
-   back to substrings only for legacy events; recorder populates `status`.
+   Either way, surface malformed failure-mode/rule files as warnings instead of
+   silent skips. Add an explicit `data_warnings: list[str]` field to
+   `PrecheckResult` (schema + regenerated JSON schema) and thread it through the
+   CLI/MCP output — do not rely on Pydantic `extra`.
+2. **Outcome status (backward-compatible — do not break legacy events).** Add an
+   explicit enum while keeping old events readable:
+   ```python
+   status: ObservationStatus | None = None   # None = legacy; NOT a validation error
+   classification_source: Literal["explicit", "legacy_heuristic"] | None = None
+   ```
+   - Newly written events (recorder / CLI / MCP) MUST carry an explicit `status`;
+     those write paths reject a missing status.
+   - Legacy JSONL and sample events without `status` MUST still load — implement a
+     before-validator / migration that leaves `status=None` (or derives it and sets
+     `classification_source="legacy_heuristic"`). Do NOT make `status` a hard
+     required field on `TraceObservation`, or old events and `examples/*.yaml` fail
+     `model_validate` (and break R05's smoke test).
+   - `is_failure_event` / `is_success_validation_event` read `status` first, falling
+     back to the substring heuristic only when `status is None`.
+   - Update `examples/sample_event.yaml` to include an explicit `status` and
+     regenerate the affected generated schemas.
 
 ## Acceptance commands
 
@@ -57,8 +72,9 @@ Guard durable-memory quality. Keep everything deterministic (no LLM).
 
 ## Required tests (add)
 
-- precheck: `test_precheck_extra_rule_actually_fires` (or, for removal, API returns builtins only); malformed file -> `data_warning`
+- precheck: `test_precheck_extra_rule_actually_fires` (or, for removal, API returns builtins only); malformed file surfaces a `PrecheckResult.data_warnings` entry (asserted through CLI/MCP)
 - distiller: `test_distiller_does_not_mark_not_passed_as_success`, `test_distiller_does_not_mark_not_ok_as_success`
+- compat: a legacy event with no `status` still validates; a recorder/CLI/MCP write with no explicit `status` is rejected; `examples/sample_event.yaml` carries an explicit `status`
 
 ## Module-specific forbidden shortcuts
 

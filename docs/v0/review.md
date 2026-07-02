@@ -1,3 +1,11 @@
+> **Source review (reviewer-authored planning input, not an implementation
+> report).** This document is review input used to plan the V0.1 remediation
+> modules (`modules/R01`–`R05`). Claims here should be verified against the listed
+> source files before editing code — do not treat statements as already-validated
+> facts. The author notes they could not clone and run `uv run pytest` / `ruff`
+> locally, so test-pass claims are quoted from the repo's own reports, not
+> independently reproduced.
+
 截至 2026-07-02，我按 GitHub 当前显示的默认分支审了这个仓库；虽然你说的是 `main`，但仓库页面显示当前分支是 `master`，所以以下 review 是针对当前默认分支代码。([GitHub][1])
 
 我先说总判断：**V0 的主体方向是对的，确实完成了一个薄的、local-first 的 DMC sidecar，而不是误做成完整 agent harness / RAG 平台 / repo indexer。** 这一点符合 V0 proposal：V0 目标是做本地 `.dmc` 工作区、durable schemas、project state、trace event、artifact card、precheck、briefing、MCP/CLI 和 adapter bundle，而非云同步、完整 UI、agent harness、向量库或自研 repo graph。

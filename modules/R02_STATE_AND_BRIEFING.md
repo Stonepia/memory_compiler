@@ -35,7 +35,29 @@ structured briefing JSON envelope is deferred V0.2 backlog — not required here
 
 ## Required work
 
-1. **State patch vs replace.** Add `ProjectStatePatch` (partial: phase/summary/
+1. **Enrich `ProjectState` first (decision: fields become first-class, not
+   `extra`).** The V0 review flagged `ProjectState` as too thin. Before patching,
+   promote the fields the patch touches into the schema so state is not a bag of
+   dynamic `extra` keys:
+   ```python
+   class ProjectDecision(BaseModel):
+       id: Slug | None = None
+       claim: str
+       evidence: list[EvidenceRef] = Field(default_factory=list)
+       confidence: Literal["low", "medium", "high"] | None = None
+
+   class ProjectState(BaseModel):
+       ...  # existing: name, status, current_phase, summary, active_task,
+            #           open_questions, updated_at
+       next_actions: list[str] = Field(default_factory=list)
+       decisions: list[ProjectDecision] = Field(default_factory=list)
+       evidence: list[EvidenceRef] = Field(default_factory=list)
+   ```
+   Add schema tests and regenerate the generated JSON schema. **Fallback:** if this
+   proves too large for one context, restrict the V0.1 patch to the CURRENT explicit
+   fields only and defer `next_actions/decisions/evidence` patch ops to V0.2 — but
+   never write them into `extra`.
+2. **State patch vs replace.** Add `ProjectStatePatch` (partial: phase/summary/
    active_task set, open_questions add/remove, next_actions set, decisions/
    evidence append) and `store.patch_project_state(patch) -> (version, diff)`.
    Expose unambiguous surfaces:
@@ -44,7 +66,7 @@ structured briefing JSON envelope is deferred V0.2 backlog — not required here
    MCP: dmc_replace_state (full upsert) CLI: dmc state replace <state-file>
    ```
    The default `state commit` naming must no longer imply patch while replacing.
-2. **Briefing loop.** On success, `dmc_get_briefing()` writes `.dmc/briefing.md`
+3. **Briefing loop.** On success, `dmc_get_briefing()` writes `.dmc/briefing.md`
    (and `.dmc/briefings/<task-or-timestamp>.md`) and returns
    `{"briefing": ..., "uri": "dmc://briefing/latest", "path": ".dmc/briefing.md"}`.
    `resource_briefing_latest()` round-trips with it.
@@ -59,6 +81,8 @@ structured briefing JSON envelope is deferred V0.2 backlog — not required here
 ## Required tests (add)
 
 - `test_state_commit_patch_does_not_replace_whole_state` (patch preserves fields)
+- appending a `decision` / `next_action` via patch persists as the typed field
+  (not an `extra` key); enriched `ProjectState` round-trips + generated schema updated
 - `state replace` performs full upsert
 - `test_mcp_get_briefing_writes_latest_resource` (tool output == resource content)
 
